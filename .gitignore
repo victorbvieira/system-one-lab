@@ -1,0 +1,42 @@
+# Bytecode e caches
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+.coverage.*
+htmlcov/
+
+# Build
+build/
+dist/
+*.egg-info/
+.eggs/
+
+# Ambiente
+.venv/
+venv/
+.env
+.env.*
+!.env.example
+.python-version
+
+# Segredos e dados sensiveis: nunca versionar
+*.key
+*.pem
+secrets/
+local/
+
+# Editores e sistema
+.vscode/
+.idea/
+.DS_Store
+
+# Modelos de NER baixados localmente
+*.whl
+pt_core_news_*/
+
+# resultados/ e precos/ SAO versionados de proposito.
+# Ver README, secao "Regras de trabalho": qualquer pessoa le os numeros sem ter chave.

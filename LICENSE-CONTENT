@@ -1,0 +1,37 @@
+Creative Commons Attribution 4.0 International (CC BY 4.0)
+
+Aplica-se ao *conteudo* deste repositorio: os textos em docs/ e artigos/, os
+datasets em casos/*/dataset.yaml e casos/*/holdout.yaml, e os numeros em
+resultados/. O *codigo* (lab/, anonimizador/, casos/*/*.py, tests/) e licenciado
+sob Apache License 2.0, no arquivo LICENSE.
+
+Voce tem liberdade para:
+
+  Compartilhar - copiar e redistribuir o material em qualquer suporte ou formato.
+  Adaptar      - remixar, transformar e criar a partir do material, para
+                 qualquer fim, inclusive comercial.
+
+Sob a seguinte condicao:
+
+  Atribuicao - Voce deve dar o credito apropriado, prover um link para a
+  licenca e indicar se mudancas foram feitas. Voce pode faze-lo de qualquer
+  forma razoavel, mas nao de maneira que sugira que o licenciante apoia voce
+  ou o seu uso.
+
+  Sem restricoes adicionais - Voce nao pode aplicar termos juridicos ou
+  medidas de carater tecnologico que restrinjam legalmente outros de fazerem
+  algo que a licenca permita.
+
+Atribuicao sugerida:
+
+  Victor Vieira (BIDU Gestao e Participacoes), "system-one-lab",
+  https://github.com/victorbvieira/system-one-lab, licenciado sob CC BY 4.0.
+
+Este arquivo e um resumo legivel e nao substitui a licenca. O texto legal
+completo, que e o que vale, esta em:
+
+  https://creativecommons.org/licenses/by/4.0/legalcode.pt
+  https://creativecommons.org/licenses/by/4.0/legalcode
+
+Aviso: os datasets deste repositorio sao sinteticos, gerados por gramatica
+deterministica, sem nenhum dado real de denuncia. Ver docs/metodologia.md.
