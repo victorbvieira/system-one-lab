@@ -1,0 +1,29 @@
+# Ruido obrigatorio. Sem isto o benchmark vira detector de palavra-chave e o numero
+# publicado nao vale nada.
+
+# Palavra alarmante em contexto benigno. Entra em casos de nivel baixo, de proposito:
+# quem casa "arma", "sangue" ou "policia" com urgencia alta erra aqui e so aqui.
+distratores:
+  - "Fora isso o {pessoa} e otimo de trabalhar, o cara e tiro, entrega tudo no prazo."
+  - "Brincadeira interna do time e chamar a sala de guerra, mas e so apelido do lugar."
+  - "Teve um susto no estacionamento com a policia que passou, mas nao tinha nada a ver conosco."
+  - "O pessoal fala que o relatorio e um massacre, e forca de expressao, e so trabalhoso mesmo."
+  - "Sangue frio e o que nao falta pra ele em reuniao dificil, isso eu reconheco."
+  - "Ate brincamos que o {setor} e um campo minado de planilha, mas e so o volume."
+
+# PII plantada em posicao conhecida. O dataset e sintetico: estes valores vem do Faker,
+# nao de ninguem. Servem de canario para medir recall do anonimizador em CI, e o valor
+# exato de cada um fica registrado no dataset, em metadados, para o teste conferir.
+canarios:
+  - tipo: cpf
+    frase: "Meu CPF e {valor_pii}, caso precisem confirmar quem esta registrando."
+  - tipo: telefone
+    frase: "Podem me ligar no {valor_pii}, atendo no horario comercial."
+  - tipo: email
+    frase: "Meu e-mail pessoal e {valor_pii}, prefiro que respondam por la."
+  - tipo: cnpj
+    frase: "O fornecedor em questao tem CNPJ {valor_pii}."
+  - tipo: cep
+    frase: "A entrega foi feita num endereco particular, CEP {valor_pii}."
+  - tipo: placa
+    frase: "Saiu no carro de placa {valor_pii} com o material."

@@ -1,0 +1,167 @@
+# Como cada sinal de gravidade aparece no texto. Compartilhado por todos os cenarios,
+# de proposito: se cada cenario tivesse a sua forma de dizer "isso continua acontecendo",
+# o modelo poderia acertar o sinal reconhecendo o cenario. Aqui ele tem de ler a frase.
+#
+# Para cada valor do sinal ha quatro formas, e as quatro existem por um motivo:
+#   direto    - a forma obvia, que um detector de palavra-chave acerta
+#   eufemismo - a mesma coisa dita de forma contida, sem palavra alarmante. E como a
+#               denuncia grave costuma chegar de verdade, e onde o benchmark decide
+#   negacao   - a negacao explicita do sinal, que derruba quem casa palavra solta
+#   ambiguo   - o texto nao permite concluir. O rotulo vira indeterminado e o caso conta
+#               na metrica de abstencao, nao na de acuracia
+#
+# Slots: {pessoa} {pessoa2} {cargo} {setor} {data} {valor} {local} {sistema}
+
+risco_fisico_iminente:
+  sim:
+    direto:
+      - "Ele chegou a empurrar {pessoa2} contra a parede e disse que da proxima vez seria pior."
+      - "{pessoa} ameacou bater em quem falasse do assunto com o {setor}."
+      - "A situacao ja terminou com gente machucada precisando de atendimento."
+      - "Ja teve gente saindo machucada de dentro do {local} por causa disso."
+    eufemismo:
+      - "A conversa terminou com {pessoa} muito perto dela, e ela saiu tremendo do {local}."
+      - "Ele fechou a porta da sala e so deixou ela sair depois de terminar o que queria dizer."
+      - "As pessoas do {setor} tem evitado ficar sozinhas com ele no fim do turno."
+      - "Depois do ocorrido em {data}, {pessoa2} passou a sair pela outra porta para nao cruzar com ele."
+  nao:
+    neutro:
+      - "Nada disso envolveu contato fisico, foi tudo por mensagem e reuniao."
+      - "A discussao ficou no campo verbal, em sala fechada com as duas partes."
+    negacao:
+      - "Nao houve ameaca nenhuma nem nada fisico, mas quero registrar assim mesmo."
+      - "Deixo claro que ninguem foi agredido; o problema e o tratamento no dia a dia."
+  ambiguo:
+    - "Ela me contou que saiu mal da sala, mas nao quis entrar em detalhe do que aconteceu."
+    - "Ouvi um barulho alto vindo do {local} e depois {pessoa2} saiu chorando, so isso."
+
+em_andamento:
+  sim:
+    direto:
+      - "Isso continua acontecendo ate hoje, foi assim de novo nesta semana."
+      - "Se repete toda semana desde {data} e ninguem fez nada ate agora."
+      - "No momento em que escrevo, a pratica segue igual no {setor}."
+    eufemismo:
+      - "Comecou em {data} e desde entao a rotina do {setor} nao mudou em nada."
+      - "Ja falei com {pessoa} duas vezes e a orientacao continua a mesma."
+      - "E o quarto mes seguido com a mesma situacao no {setor}."
+  nao:
+    neutro:
+      - "Foi um episodio unico, em {data}, e depois disso nao se repetiu."
+      - "Aconteceu uma vez so, no ano passado, e a pessoa nem trabalha mais aqui."
+    negacao:
+      - "Nao esta acontecendo mais, ela mudou de area e aquilo parou."
+      - "Isso nao se repetiu depois daquele dia, foi pontual."
+  ambiguo:
+    - "Nao sei dizer se ainda acontece, faz um tempo que nao passo pelo {setor}."
+    - "Me falaram que parou, mas ouvi coisa parecida de novo semana passada."
+
+retaliacao:
+  sim:
+    direto:
+      - "Depois que registrei, fui ameacada de demissao por {pessoa} de forma bem direta."
+      - "{pessoa} disse que quem procurar o canal vai se arrepender."
+      - "Quem testemunhou foi punido com advertencia no dia seguinte ao relato."
+    eufemismo:
+      - "Desde o relato, minhas tarefas foram redistribuidas e perdi o acesso ao {sistema}."
+      - "Coincidentemente, logo depois de falar, sai de todas as reunioes do {setor}."
+      - "Minha avaliacao de desempenho mudou de faixa sem nenhum feedback no meio."
+  nao:
+    neutro:
+      - "Nunca sofri nenhuma consequencia por ter falado, meu gestor apoiou."
+      - "Ate agora nada mudou na minha rotina por causa disso."
+    negacao:
+      - "Ninguem me ameacou nem me prejudicou por causa do registro, quero deixar isso claro."
+      - "Nao houve represalia de nenhum tipo, o problema e outro."
+  ambiguo:
+    - "Fui tirada do projeto na mesma semana, mas disseram que foi remanejamento de equipe."
+    - "Nao sei se tem relacao, minha meta mudou logo depois, pode ser so coincidencia."
+
+tem_evidencia:
+  sim:
+    direto:
+      - "Tenho print das mensagens e anexo o que for preciso."
+      - "Esta tudo registrado no {sistema}, e da para puxar o log de {data}."
+      - "{pessoa2} viu tudo e esta disposta a confirmar."
+      - "Guardei a nota fiscal de {valor} que comprova o que estou dizendo."
+    eufemismo:
+      - "A conversa toda ficou no grupo do {setor}, e o grupo ainda existe."
+      - "O documento assinado em {data} esta arquivado no {local}."
+  nao:
+    neutro:
+      - "Nao tenho nada documentado, foi tudo conversa de corredor."
+      - "Nao guardei nada, foi tudo verbal e sem registro em lugar nenhum."
+    negacao:
+      - "Nao tenho como provar e nao ha testemunha que queira se expor."
+      - "Nao existe registro disso em lugar nenhum, foi tudo verbal."
+  ambiguo:
+    - "Acho que alguem gravou, mas nao sei quem nem se guardou."
+    - "Talvez tenha ficado no sistema, nunca verifiquei."
+
+hierarquia_do_acusado:
+  par:
+    direto:
+      - "{pessoa} e do mesmo nivel que eu, trabalhamos lado a lado no {setor}."
+      - "Nao e chefe de ninguem, e colega de equipe."
+    eufemismo:
+      - "Somos os dois analistas do {setor}, nenhum responde pelo outro."
+  gestor_direto:
+    direto:
+      - "{pessoa} e meu gestor direto, responde pelo {setor}."
+      - "Quem faz isso e o chefe imediato da equipe."
+    eufemismo:
+      - "E quem aprova minhas ferias e assina minha avaliacao."
+      - "A pessoa e quem distribui as tarefas do time todo dia."
+  alta_lideranca:
+    direto:
+      - "Estou falando de um diretor da empresa, {pessoa}, {cargo}."
+      - "A pessoa envolvida e socia e senta no conselho."
+    eufemismo:
+      - "E quem decide o orcamento de todas as areas, reporta so ao dono."
+      - "A pessoa responde pela empresa quando o dono viaja."
+  externo:
+    direto:
+      - "{pessoa} nao e funcionario, e do fornecedor que atende o {setor}."
+      - "A pessoa e terceirizada, presta servico no {local}."
+    eufemismo:
+      - "Ele aparece so nos dias de entrega, cracha de visitante."
+  indeterminado:
+    direto:
+      - "Prefiro nao identificar quem fez, por enquanto."
+      - "Nao sei quem foi exatamente, chegou ate mim por terceiros."
+    eufemismo:
+      - "Foi alguem com acesso ao {sistema}, nao sei dizer quem."
+
+afetados:
+  uma_pessoa:
+    direto:
+      - "Isso atingiu so a {pessoa2}, mais ninguem."
+      - "O caso e especifico com uma pessoa do {setor}."
+    eufemismo:
+      - "Comigo, e so comigo, que acontece isso."
+  um_time:
+    direto:
+      - "O time inteiro do {setor} passa por isso, somos oito pessoas."
+      - "Atinge todo o grupo que trabalha no {local}."
+    eufemismo:
+      - "Nao sou a unica, ja ouvi o mesmo de mais tres colegas."
+  empresa_toda:
+    direto:
+      - "Isso afeta a empresa toda, nao e coisa de um setor so."
+      - "Pega todo mundo, inclusive cliente e fornecedor."
+    eufemismo:
+      - "O mesmo padrao aparece em todas as unidades, nao e local."
+  indeterminado:
+    direto:
+      - "Nao sei dizer quantas pessoas estao nessa situacao."
+      - "Pode ser so comigo ou pode ser geral, nao tenho como saber."
+    eufemismo:
+      - "Nunca perguntei para ninguem, entao nao sei o tamanho disso."
+
+fechamentos:
+  - "Fico a disposicao para detalhar."
+  - "Nao sei se e o canal certo, mas preferi registrar."
+  - "Peco que tratem com discricao."
+  - "Se precisarem de mais contexto, e so chamar."
+  - "Espero retorno sobre o que sera feito."
+  - ""

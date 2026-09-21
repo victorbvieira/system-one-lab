@@ -1,0 +1,48 @@
+# Valores de slot que o Faker nao cobre bem. Nomes, cargos, datas, valores, CPF e
+# telefone vem do Faker com locale pt_BR e semente fixa; o resto vem daqui.
+
+setores:
+  - financeiro
+  - comercial
+  - operacoes
+  - recursos humanos
+  - tecnologia
+  - logistica
+  - juridico
+  - atendimento
+  - manutencao
+  - compras
+
+# Todos masculinos de proposito: as frases da gramatica dizem "no {local}" e "do {local}",
+# e um valor feminino produziria "no sala de reuniao".
+locais:
+  - almoxarifado
+  - deposito da filial
+  - patio de carga
+  - corredor do terceiro andar
+  - refeitorio
+  - estacionamento
+  - setor de expedicao
+  - vestiario
+  - galpao 2
+  - laboratorio
+
+sistemas:
+  - ERP
+  - sistema de ponto
+  - portal de compras
+  - CRM
+  - sistema de estoque
+  - intranet
+
+cargos:
+  - analista
+  - coordenador
+  - supervisor
+  - gerente
+  - diretor
+  - assistente
+  - encarregado
+  - tecnico
+  - consultor
+  - especialista

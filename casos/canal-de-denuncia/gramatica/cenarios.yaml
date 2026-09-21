@@ -1,0 +1,135 @@
+# Cenarios do canal de denuncia. Cada um traz apenas o que e proprio dele: a abertura,
+# o nucleo do que aconteceu e o fechamento. Os sinais de gravidade vivem em sinais.yaml,
+# compartilhados, porque o rotulo sai das flags e nao do cenario: assedio moral pode ser
+# nivel 0 e desvio de material pode ser nivel 3, e um benchmark honesto precisa dos dois.
+#
+# Slots disponiveis: {pessoa} {pessoa2} {cargo} {setor} {data} {valor} {local} {sistema}
+# Preenchidos pelo Faker com locale pt_BR e semente fixa. Ver docs/metodologia.md.
+
+- id: assedio_moral
+  titulo: Assedio moral
+  aberturas:
+    - "Quero registrar uma situacao que vem acontecendo no {setor}."
+    - "Preciso relatar o comportamento de {pessoa}, {cargo} do {setor}."
+    - "Venho por meio deste canal relatar conduta inadequada no ambiente de trabalho."
+  nucleos:
+    - texto: "{pessoa} costuma expor os erros do time em reuniao aberta, citando nome e chamando de incompetente."
+      alcance: um_time
+    - "Em {data}, {pessoa} gritou com {pessoa2} na frente de todo o {setor} por causa de um relatorio atrasado."
+    - "{pessoa} manda mensagem fora do horario cobrando resposta imediata e ironiza quem demora a responder."
+    - "Toda semana {pessoa} refaz publicamente o trabalho de {pessoa2} dizendo que e para servir de exemplo."
+
+- id: assedio_sexual
+  titulo: Assedio sexual
+  aberturas:
+    - "Preciso relatar uma situacao constrangedora envolvendo {pessoa}."
+    - "Registro aqui algo que aconteceu no {local} e que me deixou desconfortavel."
+    - "Quero comunicar uma conduta de {pessoa}, {cargo}, em relacao a uma colega."
+  nucleos:
+    - "{pessoa} faz comentarios sobre o corpo de {pessoa2} e insiste em convites para sair depois do expediente."
+    - "Em {data}, durante confraternizacao no {local}, {pessoa} encostou em {pessoa2} varias vezes apos ela pedir que parasse."
+    - "{pessoa} manda mensagem de madrugada para {pessoa2} com conteudo que nao tem nada a ver com trabalho."
+    - "{pessoa} condicionou a indicacao de {pessoa2} para uma vaga a um encontro fora da empresa."
+
+- id: fraude_financeira
+  titulo: Fraude financeira
+  aberturas:
+    - "Identifiquei uma inconsistencia nos lancamentos do {setor}."
+    - "Quero relatar o que parece ser um desvio de recursos."
+    - "Ao conferir o fechamento de {data}, encontrei algo que nao fecha."
+  nucleos:
+    - "Notas de {valor} foram lancadas no {sistema} com fornecedor que nao presta servico para a empresa."
+    - "{pessoa} aprovou reembolsos proprios no valor de {valor} sem nenhum comprovante anexado."
+    - "Ha pagamentos recorrentes de {valor} para uma empresa aberta no nome de um parente de {pessoa}."
+    - "O adiantamento de {valor} liberado em {data} nunca foi prestado contas e sumiu do relatorio."
+
+- id: desvio_de_material
+  titulo: Desvio de material
+  aberturas:
+    - "Quero registrar sumico de material no {local}."
+    - "Ha divergencia entre o estoque do {sistema} e o que existe fisicamente no {setor}."
+    - "Relato aqui o que vi na saida do {local}."
+  nucleos:
+    - "{pessoa} tem levado equipamento do {setor} para casa sem nenhum registro de saida."
+    - "O inventario de {data} apontou falta de itens somando {valor}, e ninguem do {setor} soube explicar."
+    - "Caixas destinadas ao {local} foram descarregadas em endereco particular indicado por {pessoa}."
+    - "{pessoa} pede para lancar como perda material que depois aparece a venda fora da empresa."
+
+- id: seguranca_do_trabalho
+  titulo: Seguranca do trabalho
+  aberturas:
+    - "Registro uma condicao insegura no {local}."
+    - "Preciso comunicar um problema de seguranca no {setor}."
+    - "Isso ja foi falado com {pessoa} e nada mudou ate hoje."
+  nucleos:
+    - texto: "A equipe do {setor} opera sem o equipamento de protecao porque nao ha estoque desde {data}."
+      alcance: um_time
+    - "O piso do {local} esta com vazamento e ja houve queda de gente carregando carga."
+    - texto: "{pessoa} manda o pessoal subir no andaime sem travar a estrutura para ganhar tempo."
+      alcance: um_time
+    - "O maquinario do {local} esta com a protecao removida desde a ultima manutencao."
+
+- id: discriminacao
+  titulo: Discriminacao
+  aberturas:
+    - "Quero relatar tratamento desigual dentro do {setor}."
+    - "Registro aqui um comportamento discriminatorio de {pessoa}."
+    - "Isso vem se repetindo e acho que precisa ser olhado."
+  nucleos:
+    - "{pessoa} faz piada sobre a origem de {pessoa2} nas reunioes e todo mundo finge que nao ouviu."
+    - texto: "Vagas do {setor} sao sempre fechadas com o mesmo perfil, e {pessoa} deixa isso explicito na triagem."
+      alcance: um_time
+    - "{pessoa2} foi retirada de um projeto logo depois de comunicar a gravidez, por decisao de {pessoa}."
+    - "{pessoa} usa apelido pejorativo para se referir a {pessoa2} na frente de clientes."
+
+- id: conflito_de_interesse
+  titulo: Conflito de interesse
+  aberturas:
+    - "Quero comunicar uma possivel situacao de conflito de interesse."
+    - "Acho que ha relacao nao declarada entre {pessoa} e um fornecedor."
+    - "Registro isso porque pode afetar a concorrencia do {setor}."
+  nucleos:
+    - "{pessoa} e socia da empresa que venceu a ultima cotacao de {valor} do {setor}."
+    - "O fornecedor contratado em {data} e da familia de {pessoa}, e isso nunca foi declarado."
+    - "{pessoa} indicou para contratacao alguem com quem mantem relacao pessoal e participou da decisao final."
+    - "{pessoa} recebe brinde caro do mesmo fornecedor que ela mesma avalia no {sistema}."
+
+- id: retaliacao
+  titulo: Retaliacao
+  aberturas:
+    - "Depois que reportei um problema, minha situacao mudou."
+    - "Quero registrar o que veio acontecendo comigo desde o relato anterior."
+    - "Isso e sobre o que aconteceu depois que {pessoa2} falou com o juridico."
+  nucleos:
+    - "Desde {data}, fui tirada das reunioes do {setor} e perdi acesso ao {sistema} sem explicacao."
+    - "{pessoa} disse na frente do time que quem procura o canal 'ja sabe o que acontece'."
+    - "{pessoa2} teve a escala alterada para o turno da madrugada logo apos registrar uma denuncia."
+    - "Minha avaliacao caiu de nota maxima para insatisfatoria um mes depois do relato, sem nenhum feedback."
+
+- id: uso_indevido_de_dados
+  titulo: Uso indevido de dados
+  aberturas:
+    - "Preciso relatar um acesso indevido no {sistema}."
+    - "Registro uso de dados de cliente fora da finalidade."
+    - "Isso envolve a base do {setor} e me parece grave."
+  nucleos:
+    - texto: "{pessoa} exportou a base de clientes do {sistema} para um drive pessoal em {data}."
+      alcance: empresa_toda
+    - "Consultas a dados de funcionarios vem sendo feitas por {pessoa} sem nenhum chamado associado."
+    - texto: "A planilha com dados pessoais de {valor} em contratos circulou por grupo de mensagem do {setor}."
+      alcance: empresa_toda
+    - "{pessoa} pediu que a equipe usasse a base de um cliente para prospectar outro."
+
+- id: irregularidade_ambiental
+  titulo: Irregularidade ambiental
+  aberturas:
+    - "Quero relatar descarte irregular no {local}."
+    - "Registro um problema ambiental que vem se repetindo no {setor}."
+    - "Ja avisei {pessoa} e a orientacao foi tocar assim mesmo."
+  nucleos:
+    - texto: "Residuo quimico do {local} vem sendo descartado na rede comum desde {data}."
+      alcance: empresa_toda
+    - "{pessoa} manda registrar destinacao correta no {sistema} para carga que vai para terreno vazio."
+    - "O filtro do {local} esta desligado e a leitura enviada ao orgao e copiada do mes anterior."
+    - "Vazamento no {local} foi coberto com terra em vez de ser comunicado."
+

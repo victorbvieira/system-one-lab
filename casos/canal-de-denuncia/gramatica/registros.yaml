@@ -1,0 +1,61 @@
+# Registro linguistico. O mesmo caso, com o mesmo rotulo, escrito de oito formas.
+# Serve para separar duas coisas que um benchmark descuidado confunde: entender o fato
+# e reconhecer o jeito de escrever de quem trabalha em escritorio.
+#
+# Nenhuma transformacao daqui pode mudar o rotulo. "muito_curto" corta o fechamento e a
+# abertura, nunca as frases de sinal - o gerador garante isso e o teste cobra.
+
+- id: formal
+  descricao: Texto corrido, terceira pessoa, vocabulario de documento.
+  prefixo: "Prezados, "
+  ligacoes: ["Ademais, ", "Cumpre informar que ", "Por oportuno, "]
+
+- id: coloquial
+  descricao: Como a pessoa falaria, com marcadores de oralidade.
+  prefixo: "Oi, "
+  substituicoes:
+    "Prezados": "Pessoal"
+    "comunicar": "falar"
+    "solicito": "queria pedir"
+    "realizou": "fez"
+  ligacoes: ["Ai ", "E tambem ", "Fora que "]
+
+- id: telegrafico
+  descricao: Frases curtas, sem conectivo, quase anotacao.
+  remover_conectivos: true
+  ligacoes: ["", "", ""]
+
+- id: com_erro_de_digitacao
+  descricao: Digitacao apressada, com trocas e letras faltando.
+  taxa_de_erro: 0.06
+
+- id: maiusculas_misturadas
+  descricao: Caixa alta em pedacos do texto, como quem escreve com raiva ou pressa.
+  taxa_de_caixa_alta: 0.25
+
+- id: giria_regional
+  descricao: Vocabulario informal brasileiro, com regionalismo.
+  prefixo: "Fala, "
+  substituicoes:
+    "muito": "pra caramba"
+    "chefe": "chefia"
+    "pessoa": "fulano"
+    "situacao": "parada"
+    "problema": "rolo"
+  ligacoes: ["E ai ", "Dai ", "Ta ligado que "]
+
+- id: muito_curto
+  descricao: O minimo que ainda carrega os sinais. Abertura e fechamento caem.
+  sem_abertura: true
+  sem_fechamento: true
+  encurtar: true
+
+- id: prolixo
+  descricao: Volta atras, se explica, repete o que ja disse. Enche o contexto.
+  prefixo: "Boa tarde, desculpe o texto longo mas preciso contextualizar. "
+  enchimentos:
+    - "Nao sei se isso e relevante, mas acho melhor contar tudo desde o comeco."
+    - "Ja pensei muito antes de escrever isso, inclusive cheguei a desistir duas vezes."
+    - "Talvez eu esteja sendo exagerada, e se for me desculpem, mas preferi registrar."
+    - "Trabalho aqui ha bastante tempo e nunca tinha precisado usar esse canal."
+  ligacoes: ["Como eu ia dizendo, ", "Voltando ao ponto, ", "So para deixar claro, "]

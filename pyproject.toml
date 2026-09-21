@@ -84,3 +84,8 @@ markers = [
 python_version = "3.12"
 strict = true
 files = ["lab", "anonimizador", "tests"]
+
+# Case modules are loaded by path, so they reach a checker as `ModuleType` and every
+# attribute on them is `Any`. Strict mode has nothing to work with there; the invariants
+# that matter in `casos/` are enforced by the tests in `tests/test_gramatica.py`.
+exclude = "^casos/"
