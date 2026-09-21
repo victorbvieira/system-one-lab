@@ -51,6 +51,12 @@ A escada, na ordem em que e avaliada:
 | R6 | 1 relevante | um agravante isolado |
 | R7 | 0 rotina | episodio isolado, entre pares, com uma pessoa afetada |
 
+A escada e deliberadamente sensivel: R1 dispara sozinha. Um unico falso positivo em
+`risco_fisico_iminente` transforma um caso de rotina num alarme de nivel 3. Isso e escolha,
+nao descuido — em triagem de denuncia, errar para cima custa uma apuracao a mais e errar
+para baixo custa alguem. Mas significa que **recall de nivel 3 sozinho nao basta**: e
+preciso ler a precisao ao lado dele, e as duas estao no dashboard uma do lado da outra.
+
 `tem_evidencia` e perguntado e medido, mas **nao entra na escada**: evidencia muda como se
 apura, nao em quanto tempo se comeca. Deixar isso escrito e o que impede o campo de virar
 um criterio de desempate silencioso seis meses depois.

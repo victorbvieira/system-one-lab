@@ -1,0 +1,576 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>system-one-lab</title>
+<style>
+  :root {
+    color-scheme: light;
+    --plano: #f9f9f7;
+    --surface-1: #fcfcfb;
+    --borda: #e3e2dd;
+    --text-primary: #0b0b0b;
+    --text-secondary: #52514e;
+    --text-muted: #77756f;
+    --grade: #ebeae6;
+    --series-1: #2a78d6;
+    --series-2: #eb6834;
+    --apagado: #c9c8c3;
+    --seq-0: #cde2fb; --seq-1: #9ec5f4; --seq-2: #6da7ec;
+    --seq-3: #2a78d6; --seq-4: #1c5cab; --seq-5: #0d366b;
+    --tinta-sobre-baixo: #0b0b0b; --tinta-sobre-alto: #ffffff;
+    --bom: #0ca30c; --critico: #d03b3b;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      color-scheme: dark;
+      --plano: #0d0d0d;
+      --surface-1: #1a1a19;
+      --borda: #333330;
+      --text-primary: #ffffff;
+      --text-secondary: #c3c2b7;
+      --text-muted: #96948a;
+      --grade: #2b2b28;
+      --series-1: #3987e5;
+      --series-2: #d95926;
+      --apagado: #4a4945;
+      --seq-0: #0d366b; --seq-1: #104281; --seq-2: #184f95;
+      --seq-3: #256abf; --seq-4: #3987e5; --seq-5: #86b6ef;
+      --tinta-sobre-baixo: #ffffff; --tinta-sobre-alto: #0d0d0d;
+    }
+  }
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+    --plano: #0d0d0d; --surface-1: #1a1a19; --borda: #333330;
+    --text-primary: #ffffff; --text-secondary: #c3c2b7; --text-muted: #96948a;
+    --grade: #2b2b28; --series-1: #3987e5; --series-2: #d95926; --apagado: #4a4945;
+    --seq-0: #0d366b; --seq-1: #104281; --seq-2: #184f95;
+    --seq-3: #256abf; --seq-4: #3987e5; --seq-5: #86b6ef;
+    --tinta-sobre-baixo: #ffffff; --tinta-sobre-alto: #0d0d0d;
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--plano); color: var(--text-primary);
+    font: 15px/1.5 ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  }
+  .pagina { max-width: 1120px; margin: 0 auto; padding: 32px 16px 80px; }
+  header { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; flex-wrap: wrap; }
+  h1 { font-size: 24px; margin: 0 0 4px; letter-spacing: -0.01em; }
+  h2 { font-size: 17px; margin: 0 0 4px; letter-spacing: -0.01em; }
+  .sub, figcaption, .nota { color: var(--text-secondary); font-size: 13px; }
+  .nota-forte { color: var(--text-primary); }
+  button.tema {
+    background: var(--surface-1); color: var(--text-secondary); border: 1px solid var(--borda);
+    border-radius: 8px; padding: 6px 12px; font: inherit; font-size: 13px; cursor: pointer;
+  }
+  .aviso {
+    margin: 20px 0 28px; padding: 12px 14px; border-left: 3px solid var(--series-2);
+    background: var(--surface-1); border-radius: 0 8px 8px 0; font-size: 13.5px;
+    color: var(--text-secondary);
+  }
+  .kpis { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); margin-bottom: 28px; }
+  .kpi { background: var(--surface-1); border: 1px solid var(--borda); border-radius: 12px; padding: 14px 16px; }
+  .kpi .rotulo { font-size: 12.5px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.04em; }
+  .kpi .valor { font-size: 30px; font-weight: 600; letter-spacing: -0.02em; margin: 6px 0 2px; }
+  .kpi .quem { font-size: 13px; color: var(--text-secondary); }
+  figure { margin: 0 0 28px; background: var(--surface-1); border: 1px solid var(--borda); border-radius: 12px; padding: 18px 18px 14px; }
+  figcaption { margin-top: 10px; }
+  .legenda { display: flex; gap: 16px; flex-wrap: wrap; font-size: 13px; color: var(--text-secondary); margin: 2px 0 10px; }
+  .legenda span { display: inline-flex; align-items: center; gap: 6px; }
+  .amostra { width: 12px; height: 12px; border-radius: 3px; display: inline-block; }
+  svg { display: block; width: 100%; overflow: visible; }
+  svg text { font: 12px ui-sans-serif, system-ui, sans-serif; fill: var(--text-secondary); }
+  svg text.valor { fill: var(--text-primary); font-weight: 600; }
+  svg text.passo-0, svg text.passo-1, svg text.passo-2 {
+    fill: var(--tinta-sobre-baixo); font-weight: 600;
+  }
+  svg text.passo-3, svg text.passo-4, svg text.passo-5 {
+    fill: var(--tinta-sobre-alto); font-weight: 600;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) svg text.passo-3 { fill: var(--tinta-sobre-baixo); }
+  }
+  :root[data-theme="dark"] svg text.passo-3 { fill: var(--tinta-sobre-baixo); }
+  .grade line { stroke: var(--grade); stroke-width: 1; }
+  .eixo line { stroke: var(--borda); stroke-width: 1; }
+  table { border-collapse: collapse; width: 100%; font-size: 13px; }
+  th, td { text-align: right; padding: 7px 10px; border-bottom: 1px solid var(--borda); white-space: nowrap; }
+  th:first-child, td:first-child { text-align: left; position: sticky; left: 0; background: var(--surface-1); }
+  thead th { color: var(--text-muted); font-weight: 600; font-size: 12px; text-transform: uppercase; letter-spacing: 0.03em; }
+  .rolagem { overflow-x: auto; }
+  .dica {
+    position: fixed; pointer-events: none; opacity: 0; transition: opacity .1s;
+    background: var(--text-primary); color: var(--surface-1); padding: 7px 10px;
+    border-radius: 7px; font-size: 12.5px; line-height: 1.45; z-index: 10; max-width: 280px;
+  }
+  .dica b { color: inherit; }
+  details { margin-bottom: 28px; }
+  summary { cursor: pointer; color: var(--text-secondary); font-size: 14px; padding: 6px 0; }
+  .procedencia { font-size: 12.5px; color: var(--text-muted); line-height: 1.7; }
+  .procedencia code { font-size: 12px; }
+  .vazio { color: var(--text-muted); font-size: 14px; padding: 12px 0; }
+  @media (max-width: 640px) { .pagina { padding: 20px 16px 60px; } h1 { font-size: 20px; } }
+</style>
+</head>
+<body>
+<div class="pagina">
+  <header>
+    <div>
+      <h1>system-one-lab</h1>
+      <p class="sub" id="subtitulo"></p>
+    </div>
+    <button class="tema" id="tema" type="button">tema</button>
+  </header>
+
+  <p class="aviso">
+    <span class="nota-forte">Isto nao e uma comparacao definitiva entre modelos.</span>
+    Dataset pequeno, dominio unico, rotulagem de uma pessoa, e todo o corpus em portugues —
+    idioma em que o model card do Jev diz que a acuracia varia. Os numeros valem para esta
+    tarefa, neste dominio, nestas versoes. Ver <code>docs/metodologia.md</code>.
+  </p>
+
+  <div class="kpis" id="kpis"></div>
+
+  <figure>
+    <h2>Recall de nivel 3</h2>
+    <p class="sub">Quantas denuncias criticas o modelo capturou. E a metrica que decide se da para usar em producao: um falso negativo aqui custa muito mais que um falso positivo.</p>
+    <div id="grafico-recall"></div>
+    <figcaption id="legenda-recall"></figcaption>
+  </figure>
+
+  <figure>
+    <h2>Custo por nivel 3 corretamente detectado</h2>
+    <p class="sub">Custo dividido por acerto. E a unica metrica que responde a pergunta de negocio: um modelo barato que perde os casos criticos sai caro.</p>
+    <div id="grafico-custo"></div>
+    <figcaption id="legenda-custo"></figcaption>
+  </figure>
+
+  <figure>
+    <h2>Custo contra qualidade</h2>
+    <p class="sub">Cada ponto e um modelo. Quanto mais para a esquerda e para cima, melhor: barato e sem perder caso critico.</p>
+    <div id="grafico-dispersao"></div>
+    <figcaption>Eixo horizontal em dolares por mil denuncias triadas; vertical, recall de nivel 3.</figcaption>
+  </figure>
+
+  <figure>
+    <h2>Acuracia por sinal</h2>
+    <p class="sub">Onde cada modelo erra. Perguntar os sinais separados e o que torna esta tabela possivel: com um campo composto so, o erro nao tem endereco.</p>
+    <div id="grafico-sinais"></div>
+    <figcaption>Escala de cor de 50% a 100% de acerto: a cor cresce com o acerto. Passe o mouse para o valor exato.</figcaption>
+  </figure>
+
+  <figure>
+    <h2>Calibracao</h2>
+    <p class="sub">A confianca que o modelo reportou contra o acerto que teve. A diagonal e a calibracao perfeita: abaixo dela o modelo e confiante demais, acima e inseguro demais.</p>
+    <div id="grafico-calibracao"></div>
+    <figcaption id="legenda-calibracao"></figcaption>
+  </figure>
+
+  <figure>
+    <h2>Latencia</h2>
+    <p class="sub">Mediana e cauda. A p95 e a que aparece para o usuario nos piores dias.</p>
+    <div class="legenda">
+      <span><i class="amostra" style="background: var(--series-1)"></i> p50</span>
+      <span><i class="amostra" style="background: var(--series-2)"></i> p95</span>
+    </div>
+    <div id="grafico-latencia"></div>
+    <figcaption>Milissegundos por decisao, do inicio da chamada ate a saida tipada.</figcaption>
+  </figure>
+
+  <figure>
+    <h2>Matriz de confusao</h2>
+    <p class="sub">Linha: o nivel rotulado. Coluna: o nivel que o modelo compos. Na linha do nivel 3, tudo o que cai a esquerda da diagonal e uma denuncia critica que passou batido.</p>
+    <div id="grafico-matrizes"></div>
+    <figcaption>Uma matriz por modelo, na mesma escala de cor, normalizada por linha: a cor cresce com a fracao daquela linha que caiu na celula.</figcaption>
+  </figure>
+
+  <details open>
+    <summary>Tabela completa</summary>
+    <div class="rolagem"><table id="tabela"></table></div>
+  </details>
+
+  <details>
+    <summary>Procedencia de cada numero</summary>
+    <div class="procedencia" id="procedencia"></div>
+  </details>
+</div>
+
+<div class="dica" id="dica"></div>
+
+<script>
+const DADOS = /*__DADOS__*/{};
+
+const NS = "http://www.w3.org/2000/svg";
+const dica = document.getElementById("dica");
+
+function el(tag, attrs = {}, texto) {
+  const no = document.createElementNS(NS, tag);
+  for (const [chave, valor] of Object.entries(attrs)) no.setAttribute(chave, valor);
+  if (texto !== undefined) no.textContent = texto;
+  return no;
+}
+
+function comDica(no, html) {
+  no.addEventListener("pointerenter", (evento) => {
+    dica.innerHTML = html;
+    dica.style.opacity = "1";
+    mover(evento);
+  });
+  no.addEventListener("pointermove", mover);
+  no.addEventListener("pointerleave", () => { dica.style.opacity = "0"; });
+  function mover(evento) {
+    const largura = dica.offsetWidth, altura = dica.offsetHeight;
+    let x = evento.clientX + 14, y = evento.clientY - altura - 10;
+    if (x + largura > window.innerWidth - 8) x = evento.clientX - largura - 14;
+    if (y < 8) y = evento.clientY + 18;
+    dica.style.left = x + "px";
+    dica.style.top = y + "px";
+  }
+}
+
+const fmt = {
+  taxa: (v) => v == null ? "nao reportado" : (v * 100).toFixed(1) + "%",
+  usd: (v) => v == null ? "nao reportado" : "US$ " + (v < 0.01 ? v.toFixed(5) : v.toFixed(v < 1 ? 4 : 2)),
+  brl: (v) => v == null ? "nao reportado" : "R$ " + (v < 0.01 ? v.toFixed(5) : v.toFixed(v < 1 ? 4 : 2)),
+  ms: (v) => v == null ? "—" : Math.round(v) + " ms",
+  num: (v) => v == null ? "—" : (Math.round(v * 1000) / 1000).toString(),
+};
+
+/* Barras horizontais, uma por modelo. Magnitude comparada: uma cor so, com o
+   System One destacado e o resto recuado. Rotulo direto em cada barra. */
+function barras(destino, itens, { formato, destaque, sufixo = "" }) {
+  const alvo = document.getElementById(destino);
+  alvo.innerHTML = "";
+  if (!itens.length) { alvo.innerHTML = '<p class="vazio">Sem execucoes gravadas.</p>'; return; }
+
+  const alturaDaLinha = 34, margemEsquerda = 92, margemDireita = 96, topo = 8;
+  const altura = topo + itens.length * alturaDaLinha + 8;
+  const largura = 820;
+  const svg = el("svg", { viewBox: `0 0 ${largura} ${altura}`, role: "img" });
+  const maximo = Math.max(...itens.map((i) => i.valor || 0)) || 1;
+  const util = largura - margemEsquerda - margemDireita;
+
+  itens.forEach((item, indice) => {
+    const y = topo + indice * alturaDaLinha;
+    const comprimento = Math.max(2, ((item.valor || 0) / maximo) * util);
+    const cor = item.chave === destaque ? "var(--series-1)" : "var(--apagado)";
+    svg.appendChild(el("text", { x: margemEsquerda - 10, y: y + 17, "text-anchor": "end" }, item.rotulo));
+    const barra = el("rect", {
+      x: margemEsquerda, y: y + 5, width: comprimento, height: 18, rx: 4, fill: cor,
+    });
+    comDica(barra, `<b>${item.rotulo}</b><br>${item.dica}`);
+    svg.appendChild(barra);
+    svg.appendChild(el("text", {
+      x: margemEsquerda + comprimento + 8, y: y + 19, class: "valor",
+    }, formato(item.valor) + sufixo));
+  });
+  alvo.appendChild(svg);
+}
+
+/* Dispersao custo x qualidade. Uma serie so, rotulada ponto a ponto: a identidade
+   vem do rotulo, nao da cor, que e o que mantem isto legivel em daltonismo. */
+function dispersao(destino, pontos, destaque) {
+  const alvo = document.getElementById(destino);
+  alvo.innerHTML = "";
+  const validos = pontos.filter((p) => p.x != null && p.y != null);
+  if (!validos.length) { alvo.innerHTML = '<p class="vazio">Sem dados suficientes.</p>'; return; }
+
+  const largura = 820, altura = 360;
+  const m = { topo: 16, direita: 24, baixo: 44, esquerda: 56 };
+  const svg = el("svg", { viewBox: `0 0 ${largura} ${altura}`, role: "img" });
+  const maxX = Math.max(...validos.map((p) => p.x)) * 1.15 || 1;
+  const util = { x: largura - m.esquerda - m.direita, y: altura - m.topo - m.baixo };
+  const px = (x) => m.esquerda + (x / maxX) * util.x;
+  const py = (y) => m.topo + (1 - y) * util.y;
+
+  const grade = el("g", { class: "grade" });
+  for (let t = 0; t <= 1.0001; t += 0.25) {
+    grade.appendChild(el("line", { x1: m.esquerda, x2: largura - m.direita, y1: py(t), y2: py(t) }));
+    svg.appendChild(el("text", { x: m.esquerda - 10, y: py(t) + 4, "text-anchor": "end" }, (t * 100).toFixed(0) + "%"));
+  }
+  svg.appendChild(grade);
+  svg.appendChild(el("line", { x1: m.esquerda, x2: largura - m.direita, y1: py(0), y2: py(0), class: "eixo" }));
+  svg.appendChild(el("text", { x: largura - m.direita, y: altura - 12, "text-anchor": "end" }, "US$ por mil denuncias triadas"));
+
+  validos.forEach((ponto) => {
+    const destacado = ponto.chave === destaque;
+    const circulo = el("circle", {
+      cx: px(ponto.x), cy: py(ponto.y), r: destacado ? 8 : 6,
+      fill: destacado ? "var(--series-1)" : "var(--apagado)",
+      stroke: "var(--surface-1)", "stroke-width": 2,
+    });
+    comDica(circulo, `<b>${ponto.rotulo}</b><br>${ponto.dica}`);
+    svg.appendChild(circulo);
+    svg.appendChild(el("text", {
+      x: px(ponto.x) + 12, y: py(ponto.y) + 4, class: destacado ? "valor" : "",
+    }, ponto.rotulo));
+  });
+  alvo.appendChild(svg);
+}
+
+/* Mapa de calor: magnitude numa escala sequencial de um matiz so. */
+const PASSOS = 6;
+function passoSequencial(fracao) {
+  if (fracao == null || Number.isNaN(fracao)) return null;
+  return Math.min(PASSOS - 1, Math.max(0, Math.floor(fracao * PASSOS)));
+}
+
+function mapaDeCalor(destino, { linhas, colunas, valor, formato, rotuloDaCelula, dominio = [0, 1] }) {
+  const [piso, teto] = dominio;
+  const normalizar = (f) => (f == null ? null : Math.min(1, Math.max(0, (f - piso) / (teto - piso))));
+  const alvo = document.getElementById(destino);
+  alvo.innerHTML = "";
+  if (!linhas.length || !colunas.length) { alvo.innerHTML = '<p class="vazio">Sem dados.</p>'; return; }
+
+  const celula = 104, alturaDaLinha = 34, margemEsquerda = 132, topo = 42;
+  const largura = margemEsquerda + colunas.length * celula + 8;
+  const altura = topo + linhas.length * alturaDaLinha + 8;
+  const svg = el("svg", { viewBox: `0 0 ${largura} ${altura}`, role: "img" });
+
+  colunas.forEach((coluna, i) => {
+    svg.appendChild(el("text", {
+      x: margemEsquerda + i * celula + celula / 2, y: topo - 14, "text-anchor": "middle",
+    }, coluna.curto));
+  });
+  linhas.forEach((linha, j) => {
+    const y = topo + j * alturaDaLinha;
+    svg.appendChild(el("text", { x: margemEsquerda - 12, y: y + 20, "text-anchor": "end" }, linha.curto));
+    colunas.forEach((coluna, i) => {
+      const v = valor(linha, coluna);
+      const caixa = el("rect", {
+        x: margemEsquerda + i * celula + 1, y: y + 2, width: celula - 3, height: alturaDaLinha - 4,
+        rx: 4,
+        fill: passoSequencial(normalizar(v.fracao)) == null
+          ? "var(--grade)" : `var(--seq-${passoSequencial(normalizar(v.fracao))})`,
+      });
+      comDica(caixa, rotuloDaCelula(linha, coluna, v));
+      svg.appendChild(caixa);
+      svg.appendChild(el("text", {
+        x: margemEsquerda + i * celula + celula / 2 - 1, y: y + 21, "text-anchor": "middle",
+        class: `passo-${passoSequencial(normalizar(v.fracao)) ?? 0}`,
+      }, formato(v.valor)));
+    });
+  });
+  alvo.appendChild(svg);
+}
+
+/* Curva de confiabilidade: acerto observado contra confianca reportada. */
+function calibracao(destino, series) {
+  const alvo = document.getElementById(destino);
+  alvo.innerHTML = "";
+  const comCurva = series.filter((s) => s.faixas && s.faixas.some((f) => f.n > 0));
+  if (!comCurva.length) {
+    alvo.innerHTML = '<p class="vazio">Nenhum modelo desta comparacao reportou confianca. Nao e um zero: e a ausencia da medida.</p>';
+    return;
+  }
+  const largura = 820, altura = 380, m = { topo: 16, direita: 24, baixo: 44, esquerda: 56 };
+  const svg = el("svg", { viewBox: `0 0 ${largura} ${altura}`, role: "img" });
+  const util = { x: largura - m.esquerda - m.direita, y: altura - m.topo - m.baixo };
+  const px = (v) => m.esquerda + v * util.x;
+  const py = (v) => m.topo + (1 - v) * util.y;
+
+  const grade = el("g", { class: "grade" });
+  for (let t = 0; t <= 1.0001; t += 0.25) {
+    grade.appendChild(el("line", { x1: m.esquerda, x2: largura - m.direita, y1: py(t), y2: py(t) }));
+    svg.appendChild(el("text", { x: m.esquerda - 10, y: py(t) + 4, "text-anchor": "end" }, (t * 100).toFixed(0) + "%"));
+    svg.appendChild(el("text", { x: px(t), y: altura - 24, "text-anchor": "middle" }, (t * 100).toFixed(0) + "%"));
+  }
+  svg.appendChild(grade);
+  svg.appendChild(el("line", {
+    x1: px(0), y1: py(0), x2: px(1), y2: py(1),
+    stroke: "var(--apagado)", "stroke-width": 2, "stroke-dasharray": "5 5",
+  }));
+  svg.appendChild(el("text", { x: px(0.78), y: py(0.84), fill: "var(--text-muted)" }, "calibracao perfeita"));
+  svg.appendChild(el("text", { x: largura - m.direita, y: altura - 6, "text-anchor": "end" }, "confianca reportada"));
+
+  comCurva.forEach((serie, indice) => {
+    const cor = indice === 0 ? "var(--series-1)" : "var(--series-2)";
+    const pontos = serie.faixas.filter((f) => f.n > 0);
+    const caminho = pontos.map((f, i) => `${i ? "L" : "M"}${px(f.confianca)},${py(f.acerto)}`).join(" ");
+    svg.appendChild(el("path", { d: caminho, fill: "none", stroke: cor, "stroke-width": 2 }));
+    pontos.forEach((f) => {
+      const ponto = el("circle", {
+        cx: px(f.confianca), cy: py(f.acerto), r: 5, fill: cor,
+        stroke: "var(--surface-1)", "stroke-width": 2,
+      });
+      comDica(ponto, `<b>${serie.rotulo}</b><br>confianca ${fmt.taxa(f.confianca)}<br>acerto ${fmt.taxa(f.acerto)}<br>${f.n} previsoes`);
+      svg.appendChild(ponto);
+    });
+    svg.appendChild(el("text", {
+      x: px(pontos[pontos.length - 1].confianca) + 10,
+      y: py(pontos[pontos.length - 1].acerto) + 4, class: "valor",
+    }, serie.rotulo));
+  });
+  alvo.appendChild(svg);
+}
+
+/* Barras agrupadas: duas medidas na mesma unidade, duas cores categoricas. */
+function barrasAgrupadas(destino, itens) {
+  const alvo = document.getElementById(destino);
+  alvo.innerHTML = "";
+  if (!itens.length) { alvo.innerHTML = '<p class="vazio">Sem dados.</p>'; return; }
+  const alturaDoGrupo = 44, margemEsquerda = 92, margemDireita = 96;
+  const largura = 820, altura = itens.length * alturaDoGrupo + 12;
+  const svg = el("svg", { viewBox: `0 0 ${largura} ${altura}`, role: "img" });
+  const maximo = Math.max(...itens.flatMap((i) => [i.p50 || 0, i.p95 || 0])) || 1;
+  const util = largura - margemEsquerda - margemDireita;
+
+  itens.forEach((item, indice) => {
+    const y = indice * alturaDoGrupo + 6;
+    svg.appendChild(el("text", { x: margemEsquerda - 10, y: y + 22, "text-anchor": "end" }, item.rotulo));
+    [["p50", "var(--series-1)", 0], ["p95", "var(--series-2)", 17]].forEach(([chave, cor, deslocamento]) => {
+      const comprimento = Math.max(2, ((item[chave] || 0) / maximo) * util);
+      const barra = el("rect", {
+        x: margemEsquerda, y: y + deslocamento, width: comprimento, height: 15, rx: 4, fill: cor,
+      });
+      comDica(barra, `<b>${item.rotulo}</b><br>${chave}: ${fmt.ms(item[chave])}`);
+      svg.appendChild(barra);
+    });
+    svg.appendChild(el("text", {
+      x: margemEsquerda + Math.max(((item.p50 || 0) / maximo) * util, ((item.p95 || 0) / maximo) * util) + 8,
+      y: y + 22, class: "valor",
+    }, `${fmt.ms(item.p50)} / ${fmt.ms(item.p95)}`));
+  });
+  alvo.appendChild(svg);
+}
+
+function matrizes(destino, execucoes) {
+  const alvo = document.getElementById(destino);
+  alvo.innerHTML = "";
+  const niveis = ["0", "1", "2", "3", "indeterminado"];
+  const curto = { "0": "0", "1": "1", "2": "2", "3": "3", "indeterminado": "ind." };
+  execucoes.forEach((execucao) => {
+    const matriz = execucao.metricas.matriz_de_confusao || {};
+    const total = Object.values(matriz).reduce((s, l) => s + Object.values(l).reduce((a, b) => a + b, 0), 0);
+    if (!total) return;
+    const titulo = document.createElement("p");
+    titulo.className = "sub";
+    titulo.style.margin = "14px 0 2px";
+    titulo.innerHTML = `<b>${execucao.modelo}</b>`;
+    alvo.appendChild(titulo);
+    const caixa = document.createElement("div");
+    const id = `matriz-${execucao.modelo}`;
+    caixa.id = id;
+    alvo.appendChild(caixa);
+    mapaDeCalor(id, {
+      linhas: niveis.map((n) => ({ chave: n, curto: "rotulo " + curto[n] })),
+      colunas: niveis.map((n) => ({ chave: n, curto: curto[n] })),
+      valor: (linha, coluna) => {
+        const daLinha = matriz[linha.chave] || {};
+        const soma = Object.values(daLinha).reduce((a, b) => a + b, 0);
+        const v = daLinha[coluna.chave] || 0;
+        return { valor: v, fracao: soma ? v / soma : null };
+      },
+      formato: (v) => (v ? String(v) : "·"),
+      rotuloDaCelula: (linha, coluna, v) =>
+        `<b>${execucao.modelo}</b><br>rotulo ${curto[linha.chave]} respondido como ${curto[coluna.chave]}<br>${v.valor} casos`,
+    });
+  });
+  if (!alvo.children.length) alvo.innerHTML = '<p class="vazio">Sem matrizes ainda.</p>';
+}
+
+function tabela(execucoes) {
+  const linhas = [
+    ["Recall nivel 3", (m) => fmt.taxa(m.recall_nivel_3)],
+    ["Recall nivel 3 com limiar de risco", (m) => fmt.taxa(m.recall_nivel_3_com_limiar_de_risco)],
+    ["Precisao nivel 3", (m) => fmt.taxa(m.precisao_nivel_3)],
+    ["Acuracia composta", (m) => fmt.taxa(m.acuracia_composta)],
+    ["Acuracia do campo direto", (m) => fmt.taxa(m.acuracia_direta)],
+    ["Custo US$ / mil", (m) => fmt.usd(m.custo_usd_por_mil)],
+    ["Custo R$ / mil", (m) => fmt.brl(m.custo_brl_por_mil)],
+    ["Custo US$ / nivel 3 detectado", (m) => fmt.usd(m.custo_usd_por_nivel_3_detectado)],
+    ["Latencia p50", (m) => fmt.ms(m.latencia_p50_ms)],
+    ["Latencia p95", (m) => fmt.ms(m.latencia_p95_ms)],
+    ["Requisicoes por decisao", (m) => fmt.num(m.requisicoes_por_decisao)],
+    ["Taxa de hand-off", (m) => m.taxa_de_handoff == null ? "—" : fmt.taxa(m.taxa_de_handoff)],
+    ["Erro de calibracao", (m) => m.erro_de_calibracao == null ? "nao reporta" : fmt.num(m.erro_de_calibracao)],
+    ["Abstencao correta", (m) => fmt.taxa((m.abstencao || {}).taxa)],
+    ["Casos avaliados", (m) => fmt.num(m.casos_avaliados)],
+    ["Casos com erro", (m) => fmt.num(m.casos_com_erro)],
+  ];
+  const t = document.getElementById("tabela");
+  t.innerHTML = "";
+  const cabecalho = t.createTHead().insertRow();
+  cabecalho.insertCell().textContent = "Metrica";
+  DADOS.execucoes.forEach((e) => { cabecalho.insertCell().textContent = e.modelo; });
+  const corpo = t.createTBody();
+  linhas.forEach(([rotulo, formato]) => {
+    const linha = corpo.insertRow();
+    linha.insertCell().textContent = rotulo;
+    DADOS.execucoes.forEach((e) => { linha.insertCell().textContent = formato(e.metricas); });
+  });
+}
+
+function desenhar() {
+  const execucoes = DADOS.execucoes;
+  document.getElementById("subtitulo").textContent = DADOS.subtitulo;
+
+  document.getElementById("kpis").innerHTML = DADOS.kpis.map((kpi) => `
+    <div class="kpi">
+      <div class="rotulo">${kpi.rotulo}</div>
+      <div class="valor">${kpi.valor}</div>
+      <div class="quem">${kpi.quem}</div>
+    </div>`).join("");
+
+  barras("grafico-recall", execucoes.map((e) => ({
+    chave: e.modelo, rotulo: e.modelo, valor: e.metricas.recall_nivel_3,
+    dica: `recall ${fmt.taxa(e.metricas.recall_nivel_3)}<br>com limiar de risco ${fmt.taxa(e.metricas.recall_nivel_3_com_limiar_de_risco)}<br>precisao ${fmt.taxa(e.metricas.precisao_nivel_3)}`,
+  })).sort((a, b) => (b.valor || 0) - (a.valor || 0)), { formato: fmt.taxa, destaque: DADOS.destaque });
+  document.getElementById("legenda-recall").textContent = DADOS.legenda_recall;
+
+  barras("grafico-custo", execucoes.map((e) => ({
+    chave: e.modelo, rotulo: e.modelo, valor: e.metricas.custo_usd_por_nivel_3_detectado,
+    dica: `US$ ${fmt.num(e.metricas.custo_usd_por_nivel_3_detectado)} por acerto<br>US$ ${fmt.num(e.metricas.custo_usd_por_mil)} por mil triagens`,
+  })).sort((a, b) => (a.valor || Infinity) - (b.valor || Infinity)), { formato: fmt.usd, destaque: DADOS.destaque });
+  document.getElementById("legenda-custo").textContent = DADOS.legenda_custo;
+
+  dispersao("grafico-dispersao", execucoes.map((e) => ({
+    chave: e.modelo, rotulo: e.modelo,
+    x: e.metricas.custo_usd_por_mil, y: e.metricas.recall_nivel_3,
+    dica: `US$ ${fmt.num(e.metricas.custo_usd_por_mil)} por mil<br>recall ${fmt.taxa(e.metricas.recall_nivel_3)}`,
+  })), DADOS.destaque);
+
+  mapaDeCalor("grafico-sinais", {
+    linhas: execucoes.map((e) => ({ chave: e.modelo, curto: e.modelo, metricas: e.metricas })),
+    colunas: DADOS.sinais.map((s) => ({ chave: s.chave, curto: s.curto })),
+    valor: (linha, coluna) => {
+      const v = (linha.metricas.acuracia_por_sinal || {})[coluna.chave];
+      return { valor: v, fracao: v == null ? null : v };
+    },
+    formato: (v) => (v == null ? "—" : (v * 100).toFixed(0)),
+    rotuloDaCelula: (linha, coluna, v) =>
+      `<b>${linha.curto}</b><br>${coluna.chave}<br>acuracia ${fmt.taxa(v.valor)}`,
+    // Acuracia de classificacao vive na metade de cima da escala; abrir a cor de 0 a 1
+    // deixaria 70% e 100% na mesma cor e o mapa nao mostraria nada.
+    dominio: [0.5, 1],
+  });
+
+  calibracao("grafico-calibracao", execucoes.map((e) => ({
+    rotulo: e.modelo, faixas: ((e.metricas.calibracao || {}).faixas || []),
+  })));
+  document.getElementById("legenda-calibracao").textContent = DADOS.legenda_calibracao;
+
+  barrasAgrupadas("grafico-latencia", execucoes.map((e) => ({
+    rotulo: e.modelo, p50: e.metricas.latencia_p50_ms, p95: e.metricas.latencia_p95_ms,
+  })));
+
+  matrizes("grafico-matrizes", execucoes);
+  tabela(execucoes);
+  document.getElementById("procedencia").innerHTML = DADOS.procedencia
+    .map((linha) => `<div>${linha}</div>`).join("");
+}
+
+document.getElementById("tema").addEventListener("click", () => {
+  const atual = document.documentElement.getAttribute("data-theme");
+  const escuroAgora = atual
+    ? atual === "dark"
+    : window.matchMedia("(prefers-color-scheme: dark)").matches;
+  document.documentElement.setAttribute("data-theme", escuroAgora ? "light" : "dark");
+});
+
+desenhar();
+</script>
+</body>
+</html>

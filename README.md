@@ -133,7 +133,11 @@ nao preserva, e muda o que o modelo enxerga.
 | Fronteira China | `deepseek/deepseek-v4.1-flash` | referencia de custo-beneficio |
 | Fronteira China | `qwen/qwen3.8-27b` | segunda referencia, aberto |
 
-Todos via OpenRouter, para que o preco venha de uma fonte so.
+Os baselines rodam via OpenRouter, para que o preco venha de uma fonte so. **O Jev nao**:
+ele nao e servido pelo OpenRouter, e um modelo System One alcancado por um endpoint de chat
+devolveria a resposta sem a confianca e sem a distribuicao de probabilidades por tras dela —
+que e metade do que ha para medir. Entao o Jev vai pela API nativa da TypeSafe, e o preco
+dele vem do model card, em `precos/typesafe-AAAA-MM-DD.json`.
 
 **A versao do modelo e sempre fixada.** Nunca `jev-latest` num resultado
 publicado: os aliases movem quando a TypeSafe publica versao nova, e um limiar
@@ -173,14 +177,24 @@ system-one-lab/
   .env.example
   docs/
     BRIEFING.md               o briefing original do projeto
-    metodologia.md            como os datasets foram feitos e por que confiar neles
+    metodologia.md            como o dataset foi feito e por que confiar nele
+    painel.md                 como rodar, inspecionar e publicar
     anonimizacao.md           o pipeline de PII, detalhado
   lab/
-    modelos.py                registro de modelos e precos fixados
+    esquemas.py               docstring de membro de enum vira descricao no JSON Schema
+    casos.py                  carrega o caso de uma pasta com hifen no nome
+    modelos.py                catalogo de modelos, rotas e ajustes
+    precos.py                 tabelas de preco fixadas, por data
     custo.py                  custo a partir de usage + precos
-    metricas.py               avaliadores custom
-    permutacao.py             teste de estabilidade a ordem das opcoes
-    relatorio.py              impressao, baseline e export JSON
+    confianca.py              recupera a probabilidade bruta e aplica limiar assimetrico
+    tracos.py                 passos, tools e detalhes do provedor de uma execucao
+    metricas.py               avaliadores Pydantic Evals e metricas agregadas
+    execucao.py               roda um modelo sobre um corpus e monta o resultado
+    resultados.py             o formato do arquivo de resultado
+    relatorio.py              impressao e comparacao no terminal
+    dashboard.py              exporta o HTML estatico
+    painel/                   painel local em Streamlit
+    permutacao.py             teste de estabilidade a ordem das opcoes (a fazer)
     run.py                    CLI
   casos/
     canal-de-denuncia/        tipos, gramatica, dataset, holdout, agente
@@ -213,8 +227,24 @@ uv run python casos/canal-de-denuncia/gerar.py
 Rodar uma avaliacao e comparar contra baselines:
 
 ```bash
-uv run lab --caso canal-de-denuncia --modelo typesafe:jev-1.13.0 --repeticoes 5
-uv run lab --caso canal-de-denuncia --comparar --repeticoes 5
+uv run lab listar                                        # modelos, chaves, execucoes
+uv run lab rodar --modelo jev --repeticoes 3 --limite 40
+uv run lab rodar --comparar --repeticoes 3               # todos os que tiverem chave
+uv run lab comparar --ultimas 1                          # compara o que ja foi gravado
+```
+
+Abrir o painel local, que configura os agentes, roda, e mostra passo a passo o que o
+modelo fez — incluindo as tools chamadas e a confianca de cada campo:
+
+```bash
+uv sync --extra painel
+uv run lab painel                                        # http://localhost:8501
+```
+
+Exportar o dashboard estatico, que e o arquivo que vai versionado e publicado:
+
+```bash
+uv run lab dashboard                                     # resultados/<caso>/dashboard.html
 ```
 
 Extras opcionais:
@@ -223,6 +253,8 @@ Extras opcionais:
 uv sync --extra ner           # spaCy e Presidio, para a camada 2 do anonimizador
 uv sync --extra obs           # Langfuse, nunca obrigatorio para rodar
 ```
+
+Detalhes de cada opcao em [`docs/painel.md`](docs/painel.md).
 
 Testes e lint:
 
@@ -252,12 +284,26 @@ uv run mypy
 | Tarefa | Entrega | Situacao |
 |---|---|---|
 | 1 | Fundacao: `pyproject.toml`, `.gitignore`, `.env.example`, licencas, README, arvore de pastas | feito |
+| 3 | Gramatica e `dataset.yaml`: 1.120 casos balanceados, com metodologia escrita | feito |
+| 4 | Tipos e agente: os seis sinais, a rubrica `IntEnum`, a composicao da urgencia | feito |
+| 5 | Runner e metricas: CLI, custo, avaliadores, export JSON | feito |
+| — | Integracao com o Jev, painel local e dashboard estatico | feito |
 | 2 | Anonimizador: camadas 1 e 2, canarios em CI | a fazer |
-| 3 | Gramatica e `dataset.yaml`, com relatorio de distribuicao de classes | a fazer |
-| 4 | Tipos e agente: os seis sinais, a rubrica `IntEnum`, a composicao da urgencia | a fazer |
-| 5 | Runner e metricas: CLI, custo, avaliadores custom, export JSON | a fazer |
-| 6 | Teste de permutacao | a fazer |
-| 7 | Primeira rodada e artigo | a fazer |
+| 6 | Teste de permutacao: estabilidade a ordem das opcoes | a fazer |
+| 7 | Holdout humano, primeira rodada com chave e artigo | a fazer |
+
+Os canarios de PII ja estao plantados no dataset, com o valor exato registrado em cada
+caso, esperando o anonimizador da Tarefa 2.
+
+## O que da para ver
+
+Depois de uma rodada, `resultados/<caso>/dashboard.html` e uma pagina autocontida — sem
+CDN, sem build, sem servidor — com recall de nivel 3, custo por denuncia critica detectada,
+custo contra qualidade, acuracia por sinal, curva de calibracao, latencia p50 e p95 e a
+matriz de confusao de cada modelo. Ela e versionada junto com os numeros que mostra.
+
+Um modelo que nao reporta confianca aparece na calibracao como ausencia de medida, nunca
+como zero: nao poder ser calibrado e um achado sobre o modelo, e some se virar um numero.
 
 ## Licenca
 

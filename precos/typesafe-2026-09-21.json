@@ -1,0 +1,16 @@
+{
+  "fonte": "https://docs.typesafe.ai/models",
+  "coletado_em": "2026-09-21",
+  "moeda": "USD",
+  "unidade": "dolares por milhao de tokens",
+  "observacao": "O Jev nao e servido pelo OpenRouter, entao o preco vem do model card da TypeSafe e a chamada vai direto na API nativa. E o que preserva confianca e distribuicao de probabilidades, que o caminho de chat de um LLM nao carrega. Saida gratuita. Janela de 64k por requisicao, com 32k para o estado mais a maior pergunta.",
+  "modelos": {
+    "jev-1.13.0": {"entrada": 0.042, "saida": 0.0, "janela": 65536, "janela_de_estado": 32768}
+  },
+  "cambio": {
+    "par": "USD/BRL",
+    "valor": 5.138005,
+    "fonte": "https://open.er-api.com/v6/latest/USD",
+    "coletado_em": "2026-09-21T00:02:31Z"
+  }
+}

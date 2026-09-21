@@ -1,0 +1,20 @@
+{
+  "fonte": "https://openrouter.ai/api/v1/models",
+  "coletado_em": "2026-09-21",
+  "moeda": "USD",
+  "unidade": "dolares por milhao de tokens",
+  "observacao": "Precos das variantes padrao. As variantes :batch e :free existem e sao mais baratas, mas nao foram usadas: batch muda a latencia, que e uma das metricas, e free muda os limites.",
+  "modelos": {
+    "openai/gpt-5.6-sol": {"entrada": 2.0, "saida": 10.0, "janela": 1050000},
+    "anthropic/claude-opus-5": {"entrada": 5.0, "saida": 25.0, "janela": 1000000},
+    "openai/gpt-5.6-luna": {"entrada": 0.2, "saida": 1.2, "janela": 1050000},
+    "deepseek/deepseek-v4.1-flash": {"entrada": 0.15, "saida": 0.6, "janela": 1048576},
+    "qwen/qwen3.8-27b": {"entrada": 0.2, "saida": 2.5, "janela": 1000000}
+  },
+  "cambio": {
+    "par": "USD/BRL",
+    "valor": 5.138005,
+    "fonte": "https://open.er-api.com/v6/latest/USD",
+    "coletado_em": "2026-09-21T00:02:31Z"
+  }
+}
