@@ -11,7 +11,7 @@ from dataclasses import dataclass
 
 from lab.precos import TabelaDePrecos
 
-__all__ = ["Custo", "custo_de_uso", "por_mil"]
+__all__ = ["Custo", "custo_de_maquina", "custo_de_uso", "por_mil"]
 
 
 @dataclass(frozen=True)
@@ -60,6 +60,34 @@ def custo_de_uso(
         reais=tabela.em_reais(dolares),
         tokens_de_entrada=tokens_de_entrada,
         tokens_de_saida=tokens_de_saida,
+    )
+
+
+def custo_de_maquina(segundos: float, nome_da_maquina: str, tabela: TabelaDePrecos) -> Custo:
+    """Price a stretch of wall clock against a machine's hourly rate.
+
+    This is the cost of a model that runs on your own hardware, and it is a different kind
+    of number from the one above. Token cost scales with what you use; machine cost scales
+    with how long you hold the machine, so the same model is cheap saturated and ruinous
+    idle. The wall clock of a run is the honest denominator for a benchmark: it prices the
+    machine for exactly the time it was working.
+
+    Args:
+        segundos: Wall clock of the run - not the sum of the per-case latencies, which
+            counts each concurrent worker separately and would multiply the bill.
+        nome_da_maquina: A key of the ``maquinas`` section of the price files.
+        tabela: The dated table.
+
+    Returns:
+        The cost, with zero tokens: a local model spends no tokens anywhere.
+    """
+    maquina = tabela.maquina(nome_da_maquina)
+    dolares = maquina.custo(segundos)
+    return Custo(
+        dolares=dolares,
+        reais=tabela.em_reais(dolares),
+        tokens_de_entrada=0,
+        tokens_de_saida=0,
     )
 
 

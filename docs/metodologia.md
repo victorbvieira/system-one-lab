@@ -125,6 +125,17 @@ deles na primeira versao. Cada um virou um teste em `tests/test_gramatica.py`:
 | "Nao guardei nada, mas foi na frente de varias pessoas" com `tem_evidencia=False` | A frase virou "foi tudo verbal e sem registro", sem testemunha implicita |
 | Frase de seguranca do trabalho aparecia em caso de assedio | Pool compartilhado ficou neutro; o sabor do cenario vive so no nucleo |
 | Nome sorteado sem genero produzia "o Carolina Pires e otimo" | `{pessoa}` e nome masculino, `{pessoa2}` feminino, como as frases pressupoem |
+| "alguem, diretor do juridico" com hierarquia rotulada como indeterminada | A aposicao de cargo cai junto com o nome quando o relato nao sabe quem foi |
+
+O ultimo defeito da tabela nao foi encontrado por teste nenhum: foi encontrado rodando um
+modelo contra o corpus. O Laya respondeu `alta_lideranca` a um caso rotulado como
+`indeterminado`, e estava certo — o texto anunciava o cargo duas frases depois de dizer que
+nao sabia quem era. O rotulo e que estava errado. Virou o teste
+`test_cargo_do_acusado_some_quando_a_hierarquia_e_indeterminada`.
+
+Vale a generalizacao: **discordancia sistematica de um modelo num campo e sinal de bug no
+rotulo, nao so de erro do modelo.** Antes de publicar que um modelo vai mal num sinal, leia
+dez casos em que ele discorda.
 
 ## 7. PII plantada: os canarios
 
@@ -174,6 +185,11 @@ e um resultado, nao um fracasso, e vale paragrafo no artigo.
 uv run python casos/canal-de-denuncia/gerar.py          # regera o dataset.yaml
 uv run pytest tests/test_gramatica.py                   # conferem as invariantes
 ```
+
+As datas dos relatos saem de uma janela ancorada em `DATA_DE_REFERENCIA`, nao dos "ultimos
+tres anos" contados de hoje. Uma janela que anda com o relogio torna o corpus
+irreproduzivel: a mesma semente daria um arquivo diferente amanha. Foi exatamente o que o
+teste de reprodutibilidade pegou, um dia depois de ser escrito.
 
 A geracao e deterministica: mesma semente e mesma gramatica produzem o mesmo arquivo. O
 `dataset.yaml` guarda a semente e o hash da gramatica, e o teste

@@ -1,0 +1,56 @@
+# Dois jeitos de rodar o mesmo laboratorio: sem placa e com placa.
+#
+#   docker compose up lab                        # painel em http://localhost:8501
+#   docker compose run --rm lab lab listar       # CLI
+#   docker compose --profile gpu up lab-gpu      # com a placa de video
+#
+# O repositorio inteiro e montado, entao os resultados aparecem em resultados/ na sua
+# maquina, prontos para commitar. Os pesos do modelo ficam num volume nomeado e
+# sobrevivem a reconstrucao da imagem.
+
+x-comum: &comum
+  build:
+    context: .
+    dockerfile: docker/Dockerfile
+  image: system-one-lab:local
+  working_dir: /app
+  volumes:
+    - .:/app
+    - modelos:/cache/huggingface
+  env_file:
+    - path: .env
+      required: false
+  environment:
+    # Os arquivos que o container grava saem com o seu dono, nao com root.
+    HOME: /tmp
+  # Sem isto, resultados/ e dataset.yaml saem pertencendo ao root no host.
+  user: "${UID:-1000}:${GID:-1000}"
+
+services:
+  lab:
+    <<: *comum
+    container_name: system-one-lab
+    ports:
+      - "8501:8501"
+
+  lab-gpu:
+    <<: *comum
+    container_name: system-one-lab-gpu
+    profiles: ["gpu"]
+    ports:
+      - "8502:8501"
+    environment:
+      HOME: /tmp
+      NVIDIA_VISIBLE_DEVICES: all
+      NVIDIA_DRIVER_CAPABILITIES: compute,utility
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+
+volumes:
+  modelos:
+    name: system-one-lab-modelos

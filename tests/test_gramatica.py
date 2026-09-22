@@ -43,9 +43,7 @@ def test_o_arquivo_versionado_e_reproduzivel_a_partir_da_semente(dataset: dict[s
     This is the whole claim of the corpus. If it fails, either the grammar changed without
     the dataset being regenerated, or something non-deterministic crept into the generator.
     """
-    gerado = gerar.montar_documento(
-        gerar.Gerador(dataset["semente"]).gerar(), dataset["semente"]
-    )
+    gerado = gerar.montar_documento(gerar.Gerador(dataset["semente"]).gerar(), dataset["semente"])
     assert gerado == dataset
 
 
@@ -150,3 +148,22 @@ def test_registro_nunca_descarta_uma_frase_de_sinal() -> None:
             # Typos and stopword removal rewrite the sentence, so the check is that its
             # content words survive, not the sentence verbatim.
             assert any(p[:5].lower() in texto.lower() for p in palavras), (registro["id"], texto)
+
+
+def test_cargo_do_acusado_some_quando_a_hierarquia_e_indeterminada(
+    casos: list[dict[str, Any]],
+) -> None:
+    """A report that cannot say who did it must not announce their job either.
+
+    Found by running Laya against the corpus, not by a test: the text said "alguem,
+    diretor do juridico" while the label said the hierarchy was indeterminate. The model
+    answered "alta_lideranca" and was right; the label was wrong.
+    """
+    cargos = ("diretor", "gerente", "supervisor", "coordenador", "encarregado")
+    vazados = [
+        c["id"]
+        for c in casos
+        if c["rotulo"]["sinais"]["hierarquia_do_acusado"] == "indeterminado"
+        and any(f"alguem, {cargo}" in c["texto"].lower() for cargo in cargos)
+    ]
+    assert not vazados, vazados[:5]

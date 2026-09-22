@@ -126,6 +126,7 @@ nao preserva, e muda o que o modelo enxerga.
 
 | Papel | Modelo | Observacao |
 |---|---|---|
+| System One aberto | `convaiinnovations/laya` (multilingue) | 421M, ModernBERT, Apache 2.0, rodando nesta maquina. Sem custo por token e sem mandar o relato para ninguem |
 | System One | `typesafe/jev-1.13` | US$ 0,042 por milhao de tokens de entrada, saida gratuita, janela de 32k |
 | Fronteira EUA | `openai/gpt-5.6-sol` | teto de qualidade |
 | Fronteira EUA | `anthropic/claude-opus-5` | segundo teto; verifica se o resultado e do modelo ou da familia |
@@ -138,6 +139,12 @@ ele nao e servido pelo OpenRouter, e um modelo System One alcancado por um endpo
 devolveria a resposta sem a confianca e sem a distribuicao de probabilidades por tras dela —
 que e metade do que ha para medir. Entao o Jev vai pela API nativa da TypeSafe, e o preco
 dele vem do model card, em `precos/typesafe-AAAA-MM-DD.json`.
+
+O **Laya** nao e uma API: e um modelo aberto que roda em Docker na sua maquina. Isso muda o
+eixo de custo — nao ha preco por token, ha preco por hora, que corre com a maquina parada —
+e muda o que da para fazer com dado real: e a unica rota do catalogo em que o relato nao sai
+do perimetro. Ver [`docs/local.md`](docs/local.md), inclusive para por que o numero
+zero-shot dele nao e o numero dele.
 
 **A versao do modelo e sempre fixada.** Nunca `jev-latest` num resultado
 publicado: os aliases movem quando a TypeSafe publica versao nova, e um limiar
@@ -175,15 +182,20 @@ system-one-lab/
   LICENSE                     Apache 2.0, para o codigo
   LICENSE-CONTENT             CC BY 4.0, para docs, datasets, resultados e artigos
   .env.example
+  docker/
+    Dockerfile                o laboratorio inteiro, isolado
+  docker-compose.yml          servico sem placa e servico com placa
   docs/
     BRIEFING.md               o briefing original do projeto
     metodologia.md            como o dataset foi feito e por que confiar nele
     painel.md                 como rodar, inspecionar e publicar
+    local.md                  Docker, modelo local, custo por hora e privacidade
     anonimizacao.md           o pipeline de PII, detalhado
   lab/
     esquemas.py               docstring de membro de enum vira descricao no JSON Schema
     casos.py                  carrega o caso de uma pasta com hifen no nome
     modelos.py                catalogo de modelos, rotas e ajustes
+    laya.py                   rota local: o modelo aberto como modelo do Pydantic AI
     precos.py                 tabelas de preco fixadas, por data
     custo.py                  custo a partir de usage + precos
     confianca.py              recupera a probabilidade bruta e aplica limiar assimetrico
@@ -202,7 +214,7 @@ system-one-lab/
     padroes.py                regex + digito verificador
     nomes.py                  NER + gazetteer + pseudonimo deterministico
     canarios.py               PII plantada, para medir recall em CI
-  precos/                     openrouter-AAAA-MM-DD.json
+  precos/                     preco por token das APIs e preco por hora das maquinas
   resultados/                 <caso>/<modelo>/<execucao>.json e history.jsonl
   artigos/
 ```
@@ -231,6 +243,15 @@ uv run lab listar                                        # modelos, chaves, exec
 uv run lab rodar --modelo jev --repeticoes 3 --limite 40
 uv run lab rodar --comparar --repeticoes 3               # todos os que tiverem chave
 uv run lab comparar --ultimas 1                          # compara o que ja foi gravado
+```
+
+Rodar tudo em Docker, que e como o modelo local roda isolado:
+
+```bash
+export UID=$(id -u) GID=$(id -g)
+docker compose up lab                                    # painel em :8501
+docker compose run --rm lab lab rodar --modelo laya --limite 40
+docker compose --profile gpu up lab-gpu                  # com placa de video, em :8502
 ```
 
 Abrir o painel local, que configura os agentes, roda, e mostra passo a passo o que o
@@ -288,6 +309,7 @@ uv run mypy
 | 4 | Tipos e agente: os seis sinais, a rubrica `IntEnum`, a composicao da urgencia | feito |
 | 5 | Runner e metricas: CLI, custo, avaliadores, export JSON | feito |
 | — | Integracao com o Jev, painel local e dashboard estatico | feito |
+| — | Rota local (Laya em Docker), custo por hora e vazao medida | feito |
 | 2 | Anonimizador: camadas 1 e 2, canarios em CI | a fazer |
 | 6 | Teste de permutacao: estabilidade a ordem das opcoes | a fazer |
 | 7 | Holdout humano, primeira rodada com chave e artigo | a fazer |
@@ -304,6 +326,10 @@ matriz de confusao de cada modelo. Ela e versionada junto com os numeros que mos
 
 Um modelo que nao reporta confianca aparece na calibracao como ausencia de medida, nunca
 como zero: nao poder ser calibrado e um achado sobre o modelo, e some se virar um numero.
+
+Para o modelo local ha tambem `triagens_por_hora`, a vazao medida. Com ela e o preco da
+maquina, qualquer pessoa recalcula o custo no volume dela — que e a conta que importa, e que
+nao existe para uma API.
 
 ## Licenca
 

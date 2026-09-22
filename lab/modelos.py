@@ -20,7 +20,7 @@ if TYPE_CHECKING:  # pragma: no cover - import cost only paid when a run needs a
 
 __all__ = ["CATALOGO", "Ajustes", "Modelo", "construir", "modelo", "modelos_por_rota"]
 
-Rota = Literal["typesafe", "openrouter"]
+Rota = Literal["typesafe", "openrouter", "local"]
 
 
 @dataclass(frozen=True)
@@ -36,21 +36,41 @@ class Modelo:
     id_na_rota: str
     """The exact, pinned id the provider expects."""
 
-    id_de_preco: str
-    """The key this model is priced under in ``precos/``."""
+    id_de_preco: str | None
+    """The key this model is priced under in ``precos/``, or ``None`` for a local model.
+
+    A model running on your own machine has no price per token: it has a price per hour
+    that runs whether or not a report arrives. Those are priced under ``maquinas`` instead,
+    and the cost of a run is its wall clock against the machine's hourly rate.
+    """
 
     papel: str
     """What it is here to represent, in the words the article uses."""
 
     observacao: str
-    variavel_de_chave: str
+    variavel_de_chave: str | None
+    """The environment variable holding the key, or ``None`` when the model needs none."""
+
     system_one: bool = False
     """True for a model that answers typed questions with calibrated probabilities."""
 
+    checkpoint: str | None = None
+    """For a local model, which checkpoint to load."""
+
     @property
     def tem_chave(self) -> bool:
-        """Whether the key this model needs is set in the environment."""
-        return bool(os.getenv(self.variavel_de_chave))
+        """Whether this model can run: it holds its key, or needs none."""
+        return self.variavel_de_chave is None or bool(os.getenv(self.variavel_de_chave))
+
+    @property
+    def local(self) -> bool:
+        """True when nothing leaves this machine to answer.
+
+        The only route where a real report could ever be judged without a compliance
+        decision about sending it to a third party. Everything else in the catalogue is an
+        API, and for those the answer is the same whatever the price: the text leaves.
+        """
+        return self.rota == "local"
 
 
 CATALOGO: dict[str, Modelo] = {
@@ -66,6 +86,21 @@ CATALOGO: dict[str, Modelo] = {
         ),
         variavel_de_chave="TYPESAFE_API_KEY",
         system_one=True,
+    ),
+    "laya": Modelo(
+        apelido="laya",
+        rota="local",
+        id_na_rota="convaiinnovations/laya@multilingual",
+        id_de_preco=None,
+        papel="System One aberto",
+        observacao=(
+            "421M parametros, ModernBERT bidirecional, Apache 2.0, rodando nesta maquina. "
+            "Custo por token zero e custo por hora real. O checkpoint multilingue e o que "
+            "serve para portugues: o root em ingles colapsa fora do alfabeto latino."
+        ),
+        variavel_de_chave=None,
+        system_one=True,
+        checkpoint="multilingual",
     ),
     "sol": Modelo(
         apelido="sol",
@@ -143,6 +178,12 @@ class Ajustes:
     """Zero for the language models, so repetition measures the model's own variance."""
 
     tempo_limite: float = 60.0
+    dispositivo: str | None = None
+    """For a local model: ``cuda``, ``cpu``, or ``None`` to let it choose."""
+
+    maquina: str | None = None
+    """Which machine in ``precos/`` a local run is priced against."""
+
     instrucoes: str | None = None
     """Extra framing sent with every request. Shared by both routes, so the comparison is fair."""
 
@@ -156,6 +197,8 @@ class Ajustes:
             "campos_de_risco": list(self.campos_de_risco),
             "temperatura": self.temperatura,
             "tempo_limite": self.tempo_limite,
+            "dispositivo": self.dispositivo,
+            "maquina": self.maquina,
             "instrucoes": self.instrucoes,
             **self.extras,
         }
@@ -203,32 +246,56 @@ def construir(apelido: str, ajustes: Ajustes | None = None, atras: str | None = 
 
     escolhido = modelo(apelido)
     ajustes = ajustes or Ajustes()
-    chave = os.getenv(escolhido.variavel_de_chave)
-    if not chave:
+    if escolhido.variavel_de_chave is None:
+        chave = None
+    elif not (chave := os.getenv(escolhido.variavel_de_chave)):
         raise RuntimeError(
             f"{escolhido.variavel_de_chave} nao esta definida, e {escolhido.apelido} precisa "
             f"dela. Copie .env.example para .env e preencha."
         )
+    assert chave is not None or escolhido.rota == "local"
+
+    if escolhido.rota == "local":
+        from lab.laya import ModeloLaya
+
+        return ModeloLaya(
+            escolhido.checkpoint or "multilingual",
+            dispositivo=ajustes.dispositivo,
+            settings=_ajustes_de_system_one(ajustes),
+        )
 
     if escolhido.rota == "typesafe":
-        from pydantic_ai.models.typesafe import TypeSafeModel, TypeSafeModelSettings
+        from pydantic_ai.models.typesafe import TypeSafeModel
         from pydantic_ai.providers.typesafe import TypeSafeProvider
 
+        assert chave is not None
         return TypeSafeModel(
             escolhido.id_na_rota,
             provider=TypeSafeProvider(api_key=chave),
-            settings=TypeSafeModelSettings(
-                typesafe_boolean_threshold=ajustes.limiar_booleano,
-                timeout=ajustes.tempo_limite,
-            ),
+            settings=_ajustes_de_system_one(ajustes, tempo_limite=True),
         )
 
     from pydantic_ai.models.openai import OpenAIChatModel
     from pydantic_ai.providers.openrouter import OpenRouterProvider
     from pydantic_ai.settings import ModelSettings
 
+    assert chave is not None
     return OpenAIChatModel(
         escolhido.id_na_rota,
         provider=OpenRouterProvider(api_key=chave),
         settings=ModelSettings(temperature=ajustes.temperatura, timeout=ajustes.tempo_limite),
     )
+
+
+def _ajustes_de_system_one(ajustes: Ajustes, tempo_limite: bool = False) -> Any:
+    """The settings both System One routes read, under the same names.
+
+    The boolean bar means the same thing to Jev and to Laya and is recorded once, so a
+    result file never has to say which name a route happened to use.
+    """
+    from pydantic_ai.models.typesafe import TypeSafeModelSettings
+
+    ajuste = TypeSafeModelSettings(typesafe_boolean_threshold=ajustes.limiar_booleano)
+    if tempo_limite:
+        ajuste["timeout"] = ajustes.tempo_limite
+    return ajuste

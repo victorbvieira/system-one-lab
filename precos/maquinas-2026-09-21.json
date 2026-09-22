@@ -1,0 +1,27 @@
+{
+  "fonte": "informado pelo operador — EDITE com o custo real da sua maquina",
+  "coletado_em": "2026-09-21",
+  "moeda": "USD",
+  "unidade": "dolares por hora",
+  "observacao": "Um modelo local nao tem preco por token: tem preco por hora, que corre esteja ele ocupado ou parado. Por isso o custo de uma execucao local e o relogio de parede contra o preco da maquina, e o numero so vale junto com a utilizacao. Uma GPU ociosa e o arranjo mais caro da tabela.",
+  "maquinas": {
+    "local-proprio": {
+      "usd_por_hora": 0.0,
+      "descricao": "Hardware ja pago, rodando em Docker na maquina de quem testa. Custo marginal zero, fora energia. E o padrao dos testes locais, e o numero de custo por mil que sai dele e zero de proposito: o que interessa nessa fase e a qualidade e a vazao, nao o preco."
+    },
+    "t4-nuvem": {
+      "usd_por_hora": 0.35,
+      "descricao": "Uma Tesla T4 sob demanda, para comparar com o custo por token das APIs. Preco de referencia, confira o do seu provedor antes de publicar."
+    },
+    "vps-4vcpu": {
+      "usd_por_hora": 0.027,
+      "descricao": "VPS de 4 vCPU sem GPU, cerca de US$ 20 por mes. O destino se o teste local for promissor."
+    }
+  },
+  "cambio": {
+    "par": "USD/BRL",
+    "valor": 5.138005,
+    "fonte": "https://open.er-api.com/v6/latest/USD",
+    "coletado_em": "2026-09-21T00:02:31Z"
+  }
+}

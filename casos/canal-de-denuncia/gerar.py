@@ -18,6 +18,7 @@ import itertools
 import random
 import re
 from dataclasses import dataclass, field
+from datetime import date, timedelta
 from pathlib import Path
 from typing import Any
 
@@ -32,6 +33,14 @@ tipos = CASO.tipos
 GRAMATICA = CASO.diretorio / "gramatica"
 SEMENTE_PADRAO = 20260921
 VERSAO_DO_FORMATO = 1
+
+# The dates in the reports are drawn from a window anchored here, not from "the last three
+# years" counted from today. A window that moves with the wall clock makes the corpus
+# irreproducible: the same seed gives a different file tomorrow, which is exactly what
+# `test_o_arquivo_versionado_e_reproduzivel_a_partir_da_semente` caught one day after it
+# was written. The anchor is recorded in the dataset so the file says what "recent" meant.
+DATA_DE_REFERENCIA = date(2026, 9, 21)
+JANELA_DE_DATAS_EM_DIAS = 3 * 365
 
 # Per scenario: how many flag combinations to draw for each urgency level, plus the two
 # abstention slots. Drawing per level instead of sampling the space is what keeps the
@@ -150,7 +159,10 @@ class Gerador:
             "setor": rng.choice(self.slots["setores"]),
             "local": rng.choice(self.slots["locais"]),
             "sistema": rng.choice(self.slots["sistemas"]),
-            "data": self.faker.date_between(start_date="-3y").strftime("%d/%m/%Y"),
+            "data": self.faker.date_between_dates(
+                DATA_DE_REFERENCIA - timedelta(days=JANELA_DE_DATAS_EM_DIAS),
+                DATA_DE_REFERENCIA,
+            ).strftime("%d/%m/%Y"),
             "valor": _reais(self.faker.pydecimal(left_digits=4, right_digits=2, positive=True)),
         }
 
@@ -424,16 +436,24 @@ def _no_alcance(nucleos: list[Any], afetados: Any) -> list[str]:
     return escolhidos
 
 
-def _anonimizar(frase: str, anonimo: bool) -> str:
-    """Replace the accused's name with an indefinite subject when the report has none.
+# ", {cargo} do {setor}" and ", {cargo}," are appositions that name the accused's role.
+# They have to go along with the name: a model found the contradiction they left behind
+# before any test did - a report saying "alguem, diretor do juridico" announces the
+# hierarchy the label had recorded as indeterminate, and the model's "alta_lideranca" was
+# right against a label that was wrong.
+_APOSICAO_DE_CARGO = re.compile(r",\s*\{cargo\}(\s+d[oa]\s+\{setor\})?")
 
-    Naming someone two sentences before saying "I do not know who it was" is a
-    contradiction in the text, and a case whose text contradicts its label measures
+
+def _anonimizar(frase: str, anonimo: bool) -> str:
+    """Strip what identifies the accused when the report says it does not know who it was.
+
+    Naming someone - or their job - two sentences before saying "I do not know who it was"
+    is a contradiction in the text, and a case whose text contradicts its label measures
     nothing.
     """
     if not anonimo:
         return frase
-    trocada = frase.replace("{pessoa}", "alguem")
+    trocada = _APOSICAO_DE_CARGO.sub("", frase.replace("{pessoa}", "alguem"))
     return trocada[0].upper() + trocada[1:] if trocada else trocada
 
 
@@ -480,6 +500,7 @@ def montar_documento(casos: list[CasoGerado], semente: int) -> dict[str, Any]:
         ),
         "semente": semente,
         "gramatica_hash": hash_da_gramatica(),
+        "data_de_referencia": DATA_DE_REFERENCIA.isoformat(),
         "idioma": "pt-BR",
         "distribuicao": distribuicao(casos),
         "casos": [

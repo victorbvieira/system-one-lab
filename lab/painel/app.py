@@ -24,6 +24,7 @@ from lab.dashboard import exportar, ultimas_execucoes
 from lab.execucao import Plano, carregar_dataset
 from lab.execucao import executar as executar_plano
 from lab.modelos import CATALOGO, Ajustes
+from lab.precos import carregar_precos
 from lab.resultados import (
     Execucao,
     ResultadoDeCaso,
@@ -72,10 +73,19 @@ def tela_de_configuracao() -> None:
             "Modelos",
             list(CATALOGO),
             default=com_chave[:1] or ["jev"],
-            format_func=lambda nome: f"{nome} — {CATALOGO[nome].papel}",
+            format_func=lambda nome: (
+                f"{nome} — {CATALOGO[nome].papel}"
+                + (" · roda nesta maquina" if CATALOGO[nome].local else "")
+            ),
         )
         if sem_chave:
             st.caption(f"Sem chave no ambiente: {', '.join(sem_chave)}")
+        if any(CATALOGO[nome].local for nome in escolhidos):
+            st.info(
+                "Modelo local selecionado: o relato nao sai desta maquina. E a unica rota "
+                "do catalogo que um dia poderia ler denuncia real sem decisao de "
+                "compliance sobre mandar texto para terceiro."
+            )
         atras = st.selectbox(
             "Modelo atras (FallbackModel)",
             ["nenhum", *CATALOGO],
@@ -101,6 +111,22 @@ def tela_de_configuracao() -> None:
         )
         concorrencia = st.slider("Concorrencia", 1, 16, 4)
         tracos = st.radio("Guardar tracos", ["amostra", "todos", "nenhum"], horizontal=True)
+        coluna_local_a, coluna_local_b = st.columns(2)
+        dispositivo = coluna_local_a.selectbox(
+            "Dispositivo (modelo local)",
+            ["automatico", "cpu", "cuda"],
+            help="Sem GPU no container, 'cuda' falha ao carregar o checkpoint.",
+        )
+        maquinas = sorted(carregar_precos().maquinas)
+        maquina = coluna_local_b.selectbox(
+            "Maquina para precificar (modelo local)",
+            maquinas,
+            index=maquinas.index("local-proprio") if "local-proprio" in maquinas else 0,
+            help=(
+                "Um modelo local nao tem preco por token: tem preco por hora, que corre "
+                "parado. O padrao e hardware ja pago, de custo marginal zero."
+            ),
+        )
 
     with st.expander("Ajustes do agente"):
         agente = carregar_caso(caso).modulo("agente")
@@ -153,6 +179,8 @@ def tela_de_configuracao() -> None:
                     limiar_booleano=limiar_booleano,
                     limiar_de_risco=limiar_de_risco,
                     instrucoes=instrucoes,
+                    dispositivo=None if dispositivo == "automatico" else dispositivo,
+                    maquina=maquina,
                 ),
                 repeticoes=repeticoes,
                 limite=None if limite == 0 else int(limite),
@@ -189,6 +217,10 @@ def _cartoes_de_metrica(execucao: Execucao) -> None:
     colunas[2].metric("Acuracia do campo direto", _percentual(metricas.get("acuracia_direta")))
     colunas[3].metric("US$ / mil", f"{metricas.get('custo_usd_por_mil', 0):.4f}")
     colunas[4].metric("p95", f"{metricas.get('latencia_p95_ms', 0):.0f} ms")
+    if vazao := metricas.get("triagens_por_hora"):
+        maquina = metricas.get("maquina")
+        nota = f" · {maquina['nome']} a US$ {maquina['usd_por_hora']}/h" if maquina else ""
+        st.caption(f"Vazao medida: {vazao:.0f} triagens por hora{nota}")
 
 
 def _percentual(valor: float | None) -> str:

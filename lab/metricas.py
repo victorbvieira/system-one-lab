@@ -204,12 +204,16 @@ def _dispersao(casos: Sequence[ResultadoDeCaso], chave: str) -> dict[str, Any]:
     }
 
 
-def agregar(casos: Sequence[ResultadoDeCaso], custo: Custo) -> dict[str, Any]:
+def agregar(
+    casos: Sequence[ResultadoDeCaso], custo: Custo, segundos_de_parede: float | None = None
+) -> dict[str, Any]:
     """Every published metric for one run.
 
     Args:
         casos: Every case result, across every repetition.
         custo: The run's total cost.
+        segundos_de_parede: Wall clock of the evaluation. It is what decides throughput,
+            and throughput is what a machine-priced model's cost hangs on.
 
     Returns:
         The metrics dictionary written into the result file and read by the dashboard.
@@ -288,6 +292,10 @@ def agregar(casos: Sequence[ResultadoDeCaso], custo: Custo) -> dict[str, Any]:
         ),
         "tokens_de_entrada": custo.tokens_de_entrada,
         "tokens_de_saida": custo.tokens_de_saida,
+        "triagens_por_hora": (
+            round(len(validos) / segundos_de_parede * 3600, 1) if segundos_de_parede else None
+        ),
+        "segundos_de_parede": None if segundos_de_parede is None else round(segundos_de_parede, 2),
         "latencia_p50_ms": round(percentil([c.latencia_ms for c in validos], 50), 1),
         "latencia_p95_ms": round(percentil([c.latencia_ms for c in validos], 95), 1),
         "requisicoes_por_decisao": _arredondar(

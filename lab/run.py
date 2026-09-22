@@ -66,6 +66,20 @@ def _analisador() -> argparse.ArgumentParser:
     rodar.add_argument("--limiar-de-risco", type=float, default=0.3)
     rodar.add_argument("--tracos", choices=["amostra", "todos", "nenhum"], default="amostra")
     rodar.add_argument(
+        "--dispositivo",
+        default=None,
+        choices=["cpu", "cuda"],
+        help="para um modelo local: onde rodar. Sem isto, o proprio modelo escolhe",
+    )
+    rodar.add_argument(
+        "--maquina",
+        default="local-proprio",
+        help=(
+            "contra qual maquina de precos/maquinas-*.json cobrar uma execucao local. "
+            "O padrao e hardware ja pago, com custo marginal zero"
+        ),
+    )
+    rodar.add_argument(
         "--atras",
         default=None,
         help="modelo a colocar atras do primeiro, como FallbackModel, para medir hand-off",
@@ -102,6 +116,8 @@ def _plano(argumentos: argparse.Namespace, apelido: str) -> Plano:
         ajustes=Ajustes(
             limiar_booleano=argumentos.limiar_booleano,
             limiar_de_risco=argumentos.limiar_de_risco,
+            dispositivo=argumentos.dispositivo,
+            maquina=argumentos.maquina,
         ),
         repeticoes=argumentos.repeticoes,
         limite=None if argumentos.limite == 0 else argumentos.limite,
@@ -168,8 +184,13 @@ def _comparar(argumentos: argparse.Namespace) -> int:
 def _listar(argumentos: argparse.Namespace) -> int:
     console.print("[bold]Modelos[/bold]")
     for nome, escolhido in CATALOGO.items():
-        marca = "[green]chave ok[/green]" if escolhido.tem_chave else "[yellow]sem chave[/yellow]"
-        console.print(f"  {nome:9} {escolhido.id_na_rota:32} {escolhido.papel:16} {marca}")
+        if escolhido.local:
+            marca = "[green]local, sem chave[/green]"
+        elif escolhido.tem_chave:
+            marca = "[green]chave ok[/green]"
+        else:
+            marca = "[yellow]sem chave[/yellow]"
+        console.print(f"  {nome:9} {escolhido.id_na_rota:38} {escolhido.papel:18} {marca}")
     console.print("\n[bold]Execucoes gravadas[/bold]")
     caminhos = execucoes_existentes(argumentos.caso)
     if not caminhos:

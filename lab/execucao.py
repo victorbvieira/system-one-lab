@@ -22,7 +22,7 @@ from pydantic_evals.dataset import increment_eval_metric
 
 from lab.casos import carregar_caso
 from lab.confianca import reler_com_limiares
-from lab.custo import Custo, custo_de_uso
+from lab.custo import Custo, custo_de_maquina, custo_de_uso
 from lab.metricas import AcertoDeSinal, CapturouNivel3, UrgenciaComposta, agregar
 from lab.modelos import Ajustes, modelo
 from lab.precos import carregar_precos
@@ -264,9 +264,14 @@ async def executar(plano: Plano, progresso: Callable[[str], None] | None = None)
         async with semaforo:
             return await tarefa(texto)
 
+    # The wall clock of the evaluation, which is what a machine-priced model is billed
+    # for. Not the sum of the per-case latencies: with concurrency those overlap, and
+    # adding them up would bill every worker separately.
+    relogio = time.perf_counter()
     relatorio_de_avaliacao = await conjunto.evaluate(
         envelope, max_concurrency=plano.concorrencia, name=execucao.id
     )
+    segundos_de_parede = time.perf_counter() - relogio
 
     custo_total = Custo.zero()
     guardados = 0
@@ -276,8 +281,14 @@ async def executar(plano: Plano, progresso: Callable[[str], None] | None = None)
         saida = linha.output
         traco = saida["traco"]
         uso = saida["uso"]
-        custo = custo_de_uso(
-            uso.input_tokens or 0, uso.output_tokens or 0, escolhido.id_de_preco, tabela
+        # A local model spends no tokens; it spends machine time, and that is priced once
+        # for the whole run below, against the wall clock.
+        custo = (
+            Custo.zero()
+            if escolhido.id_de_preco is None
+            else custo_de_uso(
+                uso.input_tokens or 0, uso.output_tokens or 0, escolhido.id_de_preco, tabela
+            )
         )
         custo_total = custo_total + custo
 
@@ -340,6 +351,20 @@ async def executar(plano: Plano, progresso: Callable[[str], None] | None = None)
             )
         )
 
+    if escolhido.local:
+        custo_total = custo_de_maquina(
+            segundos_de_parede, plano.ajustes.maquina or "local-proprio", tabela
+        )
+        # Split evenly across the cases the machine was held for, so a per-case cost exists
+        # and sums back to the run's cost.
+        avaliados = [resultado for resultado in execucao.casos if resultado.erro is None]
+        if avaliados:
+            por_caso_usd = custo_total.dolares / len(avaliados)
+            por_caso_brl = custo_total.reais / len(avaliados)
+            for resultado in avaliados:
+                resultado.custo_usd = por_caso_usd
+                resultado.custo_brl = por_caso_brl
+
     execucao.fim = datetime.now(UTC).isoformat()
     execucao.duracao_s = round(
         (
@@ -347,7 +372,20 @@ async def executar(plano: Plano, progresso: Callable[[str], None] | None = None)
         ).total_seconds(),
         2,
     )
-    execucao.metricas = agregar(execucao.casos, custo_total)
+    execucao.metricas = agregar(execucao.casos, custo_total, segundos_de_parede)
+    execucao.metricas["maquina"] = (
+        {
+            "nome": plano.ajustes.maquina or "local-proprio",
+            "usd_por_hora": tabela.maquina(plano.ajustes.maquina or "local-proprio").usd_por_hora,
+            "dispositivo": plano.ajustes.dispositivo,
+            "nota": (
+                "O relogio de parede da execucao inclui a carga fria do checkpoint, que um "
+                "servico longo amortiza. Para uma execucao curta, este custo e pessimista."
+            ),
+        }
+        if escolhido.local
+        else None
+    )
     avisar(
         f"recall nivel 3: {execucao.metricas['recall_nivel_3']} | "
         f"custo US$ {execucao.metricas['custo_usd_por_mil']}/mil"
