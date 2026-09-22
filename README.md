@@ -190,10 +190,12 @@ system-one-lab/
     metodologia.md            como o dataset foi feito e por que confiar nele
     painel.md                 como rodar, inspecionar e publicar
     local.md                  Docker, modelo local, custo por hora e privacidade
+    holdout.md                como escrever o holdout, e por que nao da para gera-lo
     anonimizacao.md           o pipeline de PII, detalhado
   lab/
     esquemas.py               docstring de membro de enum vira descricao no JSON Schema
     casos.py                  carrega o caso de uma pasta com hifen no nome
+    holdout.py                esquema e validador do holdout escrito a mao
     modelos.py                catalogo de modelos, rotas e ajustes
     laya.py                   rota local: o modelo aberto como modelo do Pydantic AI
     precos.py                 tabelas de preco fixadas, por data
@@ -262,6 +264,13 @@ uv sync --extra painel
 uv run lab painel                                        # http://localhost:8501
 ```
 
+Escrever e validar o holdout, que e o corpus cuja metrica vai no artigo:
+
+```bash
+uv run lab holdout                    # valida e mostra a distribuicao
+uv run lab painel                     # aba "Holdout": escreve um caso por vez
+```
+
 Exportar o dashboard estatico, que e o arquivo que vai versionado e publicado:
 
 ```bash
@@ -310,9 +319,13 @@ uv run mypy
 | 5 | Runner e metricas: CLI, custo, avaliadores, export JSON | feito |
 | — | Integracao com o Jev, painel local e dashboard estatico | feito |
 | — | Rota local (Laya em Docker), custo por hora e vazao medida | feito |
+| — | Ferramental do holdout: esquema, validador e editor no painel | feito |
 | 2 | Anonimizador: camadas 1 e 2, canarios em CI | a fazer |
 | 6 | Teste de permutacao: estabilidade a ordem das opcoes | a fazer |
-| 7 | Holdout humano, primeira rodada com chave e artigo | a fazer |
+| 7 | Primeira rodada com chave e artigo | a fazer |
+
+O **holdout** tem esquema, validador e editor no painel; faltam os 60 relatos, que sao
+trabalho manual por definicao. Ver [`docs/holdout.md`](docs/holdout.md).
 
 Os canarios de PII ja estao plantados no dataset, com o valor exato registrado em cada
 caso, esperando o anonimizador da Tarefa 2.

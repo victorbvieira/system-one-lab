@@ -1,0 +1,20 @@
+versao: 1
+caso: canal-de-denuncia
+origem: Escrito e rotulado a mao, sem usar a gramatica. Nenhum LLM escreveu qualquer texto deste arquivo.
+  E a metrica que vai no artigo.
+autores:
+- Victor Vieira
+- Henrique
+instrucoes:
+- 'Escreva o relato como ele chegaria: na voz de quem denuncia, no registro que essa pessoa usaria, com
+  o tamanho que ela escreveria.'
+- Nao copie frase da gramatica. O validador recusa trecho identico a ela.
+- 'Nao use dado real de ninguem: nome, CPF, telefone, e-mail ou endereco.'
+- Marque os seis sinais pelo que o TEXTO afirma, nao pelo que voce imagina. A urgencia sai deles por compor_urgencia,
+  nunca digitada a mao.
+- 'Se o texto nao permite concluir um sinal, use indeterminado ou marque o sinal como ambiguo: o caso
+  vai para a metrica de abstencao.'
+- 'Alvo: 60 casos, com ao menos 10 por nivel.'
+casos: []
+distribuicao:
+  total: 0

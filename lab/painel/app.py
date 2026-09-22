@@ -19,6 +19,7 @@ from pathlib import Path
 import streamlit as st
 from dotenv import load_dotenv
 
+from lab import holdout as modulo_de_holdout
 from lab.casos import carregar_caso, casos_disponiveis
 from lab.dashboard import exportar, ultimas_execucoes
 from lab.execucao import Plano, carregar_dataset
@@ -423,6 +424,170 @@ def _temporario(caso: str) -> Path:
     return destino
 
 
+# -- holdout ------------------------------------------------------------------------
+
+
+def _cenarios_do_caso(caso: str) -> list[str]:
+    import yaml
+
+    arquivo = carregar_caso(caso).diretorio / "gramatica" / "cenarios.yaml"
+    if not arquivo.is_file():
+        return []
+    return [c["id"] for c in yaml.safe_load(arquivo.read_text(encoding="utf-8"))]
+
+
+def tela_de_holdout() -> None:
+    """Write the hand-made holdout, one case at a time, with the label computed.
+
+    The urgency is never typed here. It appears as the signals are set, from the same
+    function the whole repository is measured against - which is what makes a label
+    arguable instead of a matter of who was labelling that afternoon.
+    """
+    st.subheader("Holdout escrito a mao")
+    st.caption(
+        "O dataset sintetico mede se a abordagem funciona; ele nao prova que funciona no "
+        "mundo. A metrica que vai no artigo e a daqui. Nenhum texto deste arquivo pode "
+        "sair de LLM nem da gramatica — se saisse, nao seria holdout."
+    )
+
+    casos = casos_disponiveis()
+    if not casos:
+        st.error("Nenhum caso encontrado.")
+        return
+    caso = st.selectbox("Caso", casos, key="holdout_caso")
+    tipos = carregar_caso(caso).modulo("tipos")
+    documento = modulo_de_holdout.carregar(caso)
+    relatorio = modulo_de_holdout.validar(documento, caso)
+
+    escritos = len(documento["casos"])
+    colunas = st.columns(4)
+    colunas[0].metric("Escritos", f"{escritos}/{modulo_de_holdout.TAMANHO_ALVO}")
+    por_nivel = (relatorio.distribuicao.get("por_urgencia") or {}) if escritos else {}
+    for indice, nivel in enumerate(("0", "1", "2", "3")):
+        if indice < 3:
+            colunas[indice + 1].metric(f"Nivel {nivel}", por_nivel.get(nivel, 0))
+    st.progress(min(1.0, escritos / modulo_de_holdout.TAMANHO_ALVO))
+
+    if relatorio.erros:
+        st.error("\n\n".join(str(p) for p in relatorio.erros))
+    if relatorio.avisos:
+        with st.expander(f"{len(relatorio.avisos)} aviso(s)"):
+            for problema in relatorio.avisos:
+                st.write(str(problema))
+
+    st.divider()
+    st.markdown("### Escrever um caso")
+
+    autor = st.text_input(
+        "Autor", value=st.session_state.get("holdout_autor", ""), key="holdout_autor"
+    )
+    texto = st.text_area(
+        "O relato, como ele chegaria ao canal",
+        height=200,
+        key="holdout_texto",
+        placeholder=(
+            "Na voz de quem denuncia, no registro que essa pessoa usaria. "
+            "Sem nome, CPF, telefone ou e-mail de gente de verdade."
+        ),
+    )
+    cenario = st.selectbox("Cenario", _cenarios_do_caso(caso), key="holdout_cenario")
+
+    st.markdown("**Os seis sinais, pelo que o texto afirma**")
+    esquerda, direita = st.columns(2)
+    sinais: dict[str, object] = {
+        "risco_fisico_iminente": esquerda.checkbox("Risco fisico iminente", key="h_risco"),
+        "em_andamento": esquerda.checkbox("O fato continua acontecendo", key="h_andamento"),
+        "retaliacao": esquerda.checkbox("Ha retaliacao", key="h_retaliacao"),
+        "tem_evidencia": esquerda.checkbox("Cita evidencia verificavel", key="h_evidencia"),
+        "hierarquia_do_acusado": direita.selectbox(
+            "Hierarquia do acusado",
+            [membro.value for membro in tipos.Hierarquia],
+            key="h_hierarquia",
+        ),
+        "afetados": direita.selectbox(
+            "Alcance", [membro.value for membro in tipos.Afetados], key="h_afetados"
+        ),
+    }
+    ambiguos = st.multiselect(
+        "Sinais que o texto deixa em aberto (o caso vai para abstencao)",
+        list(sinais),
+        key="h_ambiguos",
+    )
+    notas = st.text_input("Notas sobre o julgamento (opcional)", key="h_notas")
+
+    composicao = tipos.compor_urgencia(tipos.Sinais.model_validate(sinais))
+    if ambiguos:
+        st.info(
+            "Com um sinal em aberto, este caso **abstem**: entra na metrica de abstencao, "
+            "nao na de acuracia."
+        )
+    else:
+        nivel_composto = None if composicao.urgencia is None else int(composicao.urgencia)
+        st.success(
+            f"Urgencia composta: **{_rotulo_de_nivel(nivel_composto)}** pela regra "
+            f"**{composicao.regra}** — {composicao.motivo}"
+        )
+    st.caption(
+        "A urgencia nao e digitada: ela sai de compor_urgencia. Se o resultado te "
+        "surpreendeu, ou o texto diz outra coisa, ou a regra precisa ser discutida com o "
+        "juridico. As duas conversas sao melhores que digitar um numero."
+    )
+
+    if st.button(
+        "Adicionar ao holdout", type="primary", disabled=not (texto.strip() and autor.strip())
+    ):
+        novo = modulo_de_holdout.novo_caso(
+            texto=texto,
+            sinais=sinais,
+            cenario=cenario,
+            autor=autor,
+            caso=caso,
+            notas=notas,
+            sinais_ambiguos=ambiguos,
+        )
+        conferencia = modulo_de_holdout.validar(
+            {**documento, "casos": [*documento["casos"], novo]}, caso
+        )
+        novos_erros = [p for p in conferencia.erros if p.caso == novo["id"]]
+        if novos_erros:
+            for problema in novos_erros:
+                st.error(str(problema))
+        else:
+            documento["casos"].append(novo)
+            if autor and autor not in documento.get("autores", []):
+                documento.setdefault("autores", []).append(autor)
+            caminho = modulo_de_holdout.escrever(documento, caso)
+            st.success(f"Gravado em {caminho} como `{novo['id']}`. Commite quando quiser.")
+            st.rerun()
+
+    if documento["casos"]:
+        st.divider()
+        st.markdown("### Casos ja escritos")
+        st.dataframe(
+            [
+                {
+                    "id": c["id"],
+                    "autor": c.get("autor", ""),
+                    "cenario": c.get("cenario", ""),
+                    "urgencia": _rotulo_de_nivel(c["rotulo"]["urgencia"]),
+                    "regra": c["rotulo"]["regra"],
+                    "caracteres": len(c["texto"]),
+                    "inicio": c["texto"][:80] + "...",
+                }
+                for c in documento["casos"]
+            ],
+            use_container_width=True,
+            hide_index=True,
+        )
+        remover = st.selectbox(
+            "Remover um caso", ["nenhum", *(c["id"] for c in documento["casos"])]
+        )
+        if remover != "nenhum" and st.button("Remover", type="secondary"):
+            documento["casos"] = [c for c in documento["casos"] if c["id"] != remover]
+            modulo_de_holdout.escrever(documento, caso)
+            st.rerun()
+
+
 def principal() -> None:
     st.title("system-one-lab")
     st.caption(
@@ -430,8 +595,8 @@ def principal() -> None:
         "Dataset pequeno, dominio unico, rotulagem de uma pessoa: os numeros valem "
         "para esta tarefa e nada alem dela."
     )
-    aba_config, aba_execucoes, aba_dashboard = st.tabs(
-        ["Configurar e rodar", "Execucoes", "Dashboard"]
+    aba_config, aba_execucoes, aba_dashboard, aba_holdout = st.tabs(
+        ["Configurar e rodar", "Execucoes", "Dashboard", "Holdout"]
     )
     with aba_config:
         tela_de_configuracao()
@@ -439,6 +604,8 @@ def principal() -> None:
         tela_de_execucoes()
     with aba_dashboard:
         tela_de_dashboard()
+    with aba_holdout:
+        tela_de_holdout()
 
 
 principal()

@@ -155,7 +155,8 @@ explicitamente fora do escopo da camada deterministica.
 
 ## 8. O que esta medido e o que nao esta
 
-**O holdout ainda nao existe.** O dataset sintetico mede se a abordagem funciona; ele nao
+O ferramental do holdout ja existe — esquema, validador e editor no painel, em
+[`holdout.md`](holdout.md). **Os 60 relatos ainda nao.** O dataset sintetico mede se a abordagem funciona; ele nao
 prova que funciona no mundo. A metrica que vai no artigo e a do `holdout.yaml`: 60 casos
 escritos e rotulados a mao por Victor e pelo Henrique, sem usar a gramatica. Nao pode ser
 gerado, por definicao — se fosse, nao seria holdout.

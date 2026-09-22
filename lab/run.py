@@ -101,6 +101,17 @@ def _analisador() -> argparse.ArgumentParser:
     painel = comandos.add_parser("painel", help="abre o painel local (Streamlit)")
     painel.add_argument("--porta", type=int, default=8501)
 
+    hold = comandos.add_parser(
+        "holdout", help="valida o holdout escrito a mao, ou cria o arquivo inicial"
+    )
+    hold.add_argument("--caso", default="canal-de-denuncia")
+    hold.add_argument(
+        "--iniciar",
+        action="store_true",
+        help="cria o arquivo vazio com o esquema e as instrucoes, se ainda nao existir",
+    )
+    hold.add_argument("--autor", action="append", default=None, help="repetivel")
+
     dash = comandos.add_parser("dashboard", help="exporta o dashboard estatico em HTML")
     dash.add_argument("--caso", default="canal-de-denuncia")
     dash.add_argument("--destino", type=Path, default=None)
@@ -228,6 +239,36 @@ def _dashboard(argumentos: argparse.Namespace) -> int:
     return 0
 
 
+def _holdout(argumentos: argparse.Namespace) -> int:
+    from lab import holdout
+    from lab.casos import carregar_caso
+
+    caminho = carregar_caso(argumentos.caso).holdout
+    if argumentos.iniciar:
+        if caminho.is_file():
+            console.print(f"[yellow]{caminho} ja existe; nada a fazer.[/yellow]")
+        else:
+            documento = holdout.modelo_de_arquivo(argumentos.caso, argumentos.autor)
+            holdout.escrever(documento, argumentos.caso)
+            console.print(f"Arquivo iniciado em {caminho}")
+            for instrucao in documento["instrucoes"]:
+                console.print(f"  [dim]- {instrucao}[/dim]")
+            return 0
+
+    documento = holdout.carregar(argumentos.caso)
+    relatorio = holdout.validar(documento, argumentos.caso)
+
+    console.print(f"[bold]{caminho}[/bold]")
+    console.print(f"  {relatorio.distribuicao}")
+    for problema in relatorio.erros:
+        console.print(f"  [red]{problema}[/red]")
+    for problema in relatorio.avisos:
+        console.print(f"  [yellow]{problema}[/yellow]")
+    if relatorio.valido and not relatorio.avisos:
+        console.print("  [green]sem problemas[/green]")
+    return 0 if relatorio.valido else 1
+
+
 def main() -> int:
     """Entry point for the ``lab`` command."""
     load_dotenv()
@@ -238,6 +279,7 @@ def main() -> int:
         "listar": _listar,
         "painel": _painel,
         "dashboard": _dashboard,
+        "holdout": _holdout,
     }
     if argumentos.comando == "rodar" and not os.getenv("TYPESAFE_API_KEY"):
         console.print(

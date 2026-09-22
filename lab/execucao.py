@@ -20,6 +20,7 @@ import yaml
 from pydantic_evals import Case, Dataset
 from pydantic_evals.dataset import increment_eval_metric
 
+from lab import holdout
 from lab.casos import carregar_caso
 from lab.confianca import reler_com_limiares
 from lab.custo import Custo, custo_de_maquina, custo_de_uso
@@ -77,11 +78,17 @@ class Plano:
 
 
 def carregar_dataset(caso: str, fonte: str = "dataset") -> dict[str, Any]:
-    """Read a case's corpus from disk.
+    """Read a case's corpus from disk, refusing one that cannot produce a fair number.
+
+    The holdout is validated before it is used, not after. Its errors are the kind that do
+    not announce themselves in a metric - a label that disagrees with the composition rule,
+    or a case copied from the grammar - and a run that starts anyway spends money to
+    produce a number nobody should trust.
 
     Raises:
         FileNotFoundError: Naming the holdout explicitly, since its absence is expected
             until it is written by hand and is not a bug to debug.
+        ValueError: If the holdout is empty or fails validation, listing what is wrong.
     """
     carregado = carregar_caso(caso)
     caminho = carregado.dataset if fonte == "dataset" else carregado.holdout
@@ -89,10 +96,24 @@ def carregar_dataset(caso: str, fonte: str = "dataset") -> dict[str, Any]:
         if fonte == "holdout":
             raise FileNotFoundError(
                 f"{caminho} ainda nao existe. O holdout e escrito e rotulado a mao, por "
-                f"definicao: se fosse gerado, nao seria holdout. Ver docs/metodologia.md."
+                f"definicao: se fosse gerado, nao seria holdout. Comece com "
+                f"`lab holdout --iniciar`, ou pela aba Holdout do painel. "
+                f"Ver docs/metodologia.md."
             )
         raise FileNotFoundError(f"{caminho} nao existe. Rode gerar.py primeiro.")
+
     documento: dict[str, Any] = yaml.safe_load(caminho.read_text(encoding="utf-8"))
+    if fonte == "holdout":
+        documento = holdout.normalizar(documento)
+        if not documento["casos"]:
+            raise ValueError(
+                f"{caminho} existe mas nao tem nenhum caso escrito. O holdout e trabalho "
+                f"manual: sao {holdout.TAMANHO_ALVO} relatos escritos e rotulados a mao."
+            )
+        relatorio = holdout.validar(documento, caso)
+        if not relatorio.valido:
+            erros = "\n  ".join(str(p) for p in relatorio.erros)
+            raise ValueError(f"{caminho} nao passou na validacao:\n  {erros}")
     documento["arquivo"] = caminho.name
     return documento
 
